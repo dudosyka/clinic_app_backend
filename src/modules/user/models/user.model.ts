@@ -1,13 +1,43 @@
-import { Column, Model, Table } from "sequelize-typescript";
+import { AutoIncrement, Column, Model, PrimaryKey, Table } from "sequelize-typescript";
 
 @Table
 export class UserModel extends Model {
+
     @Column
+    @PrimaryKey
+    @AutoIncrement
+    id: number
+
+    @Column({
+        allowNull: false
+    })
     login: string
 
-    @Column
+    @Column({
+        allowNull: false
+    })
     hash: string
 
-    @Column
+    @Column({
+        allowNull: false
+    })
     role: number
+
+    @Column
+    rank: string
+
+    @Column
+    position: string
+
+    @Column
+    surname: string
+
+    @Column
+    name: string
+
+    @Column
+    lastname: string
+
+    @Column
+    birthday: string
 }

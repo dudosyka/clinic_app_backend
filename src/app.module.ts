@@ -12,6 +12,7 @@ import { default as main, ProjectState } from "./confs/main.conf";
 import { default as db } from "./confs/db.conf";
 import {LoggerModule} from "./modules/logger/logger.module";
 import {UserModule} from "./modules/user/user.module";
+import { AppointmentModule } from "./modules/appointment/appointment.module";
 
 const db_conf = main.isDev == ProjectState.DEV ? db.dev : db.prod;
 
@@ -24,7 +25,8 @@ const db_conf = main.isDev == ProjectState.DEV ? db.dev : db.prod;
       synchronize: true
     }),
     LoggerModule,
-    UserModule
+    UserModule,
+    AppointmentModule
   ],
   controllers: [AppController],
   providers: [
