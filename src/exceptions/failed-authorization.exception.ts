@@ -2,10 +2,15 @@ import { HttpException } from "@nestjs/common";
 
 export class FailedAuthorizationException<T> extends HttpException {
   constructor(password: boolean, email: boolean) {
+    const status = 403;
+    let response: any = { "authorization": "failed" };
+
     if (password)
-      super({ "password": "failed" }, 403);
+      response = { "secret": "failed" };
     if (email)
-      super({ "email": "failed" }, 403);
+      response = { "email": "failed" };
+
+    super(response, status)
   }
 
 }

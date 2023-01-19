@@ -29,7 +29,10 @@ export class BaseService<M extends Model> {
   }
 
   public async remove(query: any = {}): Promise<boolean> {
-    const result = await this.model.destroy(query);
-    return result > 0;
+    const modelOnRemove = await this.getOne(query);
+
+    await modelOnRemove.destroy(query);
+
+    return true;
   }
 }

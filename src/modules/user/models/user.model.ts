@@ -3,9 +3,9 @@ import { AutoIncrement, Column, Model, PrimaryKey, Table } from "sequelize-types
 @Table
 export class UserModel extends Model {
 
-    @Column
     @PrimaryKey
     @AutoIncrement
+    @Column
     id: number
 
     @Column({

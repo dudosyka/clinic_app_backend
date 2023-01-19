@@ -5,7 +5,7 @@ export enum ProjectState {
 }
 
 export enum UserRole {
-  Admin, Doctor
+  Admin, Doctor, Patient
 }
 
 export default {

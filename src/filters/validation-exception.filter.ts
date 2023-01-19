@@ -35,7 +35,7 @@ export class ValidationExceptionFilter extends BaseExceptionFilter implements Ex
 
     if (typeof exception.getResponse() != 'string') {
       let message = [];
-      Object.keys(exception.getResponse()).map(el => {
+      Object.keys(exception.getResponse()).forEach(el => {
         if (el == 'message')
           message = exception.getResponse()[el];
       })

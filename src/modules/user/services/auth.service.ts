@@ -13,20 +13,6 @@ export class AuthService {
         @Inject(JwtUtil) private jwt: JwtUtil
     ) {}
 
-    async validateCode(code: string): Promise<any> {
-        const user = await UserModel.findOne({
-            where: {
-                login: code,
-            }
-        });
-
-        if (!user) {
-            return null;
-        } else {
-            return user;
-        }
-    }
-
     public async validateCredentials(login: string, password: string): Promise<UserModel> {
         let user = await UserModel.findOne({
             where: {

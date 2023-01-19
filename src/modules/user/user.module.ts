@@ -22,6 +22,7 @@ import { JwtUtil } from "../../utils/jwt.util";
         }),
     ],
     controllers: [UserController],
-    providers: [UserService, BcryptUtil, JwtUtil, AuthService, LocalStrategy, JwtStrategy]
+    providers: [UserService, BcryptUtil, JwtUtil, AuthService, LocalStrategy, JwtStrategy],
+    exports: [UserService, BcryptUtil, JwtUtil, AuthService, LocalStrategy, JwtStrategy, SequelizeModule.forFeature([UserModel])]
 })
 export class UserModule {}
