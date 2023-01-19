@@ -1,4 +1,5 @@
-import { AutoIncrement, Column, Model, PrimaryKey, Table } from "sequelize-typescript";
+import { AutoIncrement, BelongsTo, Column, Model, PrimaryKey, Table } from "sequelize-typescript";
+import { DiagnosisModel } from "./diagnosis.model";
 
 @Table
 export class UserModel extends Model {
@@ -40,4 +41,10 @@ export class UserModel extends Model {
 
     @Column
     birthday: string
+
+    @Column
+    diagnosis_id: number
+
+    @BelongsTo(() => DiagnosisModel, "diagnosis_id")
+    diagnosis: DiagnosisModel
 }

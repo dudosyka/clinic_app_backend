@@ -19,8 +19,10 @@ import { UserService } from "../services/user.service";
 import { UserRole } from "../../../confs/main.conf";
 import { UserCreateDto } from "../dtos/user-create.dto";
 import { UserUpdateDto } from "../dtos/user-update.dto";
+import { JwtAuthGuard } from "../../../guards/jwt-auth.guard";
 
 @Controller('user')
+@UseGuards(JwtAuthGuard)
 export class UserController {
   constructor(
     @Inject(AuthService) private authService: AuthService,

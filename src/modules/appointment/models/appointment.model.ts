@@ -1,24 +1,36 @@
 import { BaseModel } from "../../base/base.service";
-import { AutoIncrement, BelongsTo, BelongsToMany, Column, PrimaryKey, Table } from "sequelize-typescript";
+import {
+  AutoIncrement,
+  BelongsTo,
+  BelongsToMany,
+  Column,
+  DataType,
+  PrimaryKey,
+  Table
+} from "sequelize-typescript";
 import { UserModel } from "../../user/models/user.model";
 import { AnalysisModel } from "./analysis.model";
 import { AppointmentAnalysisModel } from "./appointment-analysis.model";
-import { AppointmentInoculationModel } from "./appointment-inoculation.model";
-import { UltrasoundModel } from "./ultrasound.model";
-import { InoculationModel } from "./inoculation.model";
-import { AppointmentUltrasoundModel } from "./appointment-ultrasound.model";
+import { AppointmentVaccineModel } from "./appointment-vaccine.model";
+import { UziModel } from "./uzi.model";
+import { VaccineModel } from "./vaccine.model";
+import { AppointmentUziModel } from "./appointment-uzi.model";
+import { DopplerModel } from "./doppler.model";
+import { DiagnosisModel } from "../../user/models/diagnosis.model";
+import MainConf from "../../../confs/main.conf";
 
 @Table
 export class AppointmentModel extends BaseModel {
-  @Column
+
   @PrimaryKey
   @AutoIncrement
+  @Column
   id: number
 
   @Column({
     defaultValue: false
   })
-  isFirst: boolean
+  is_first: boolean
 
   @Column({
     allowNull: false
@@ -36,12 +48,37 @@ export class AppointmentModel extends BaseModel {
   @BelongsTo(() => UserModel, 'doctor_id')
   doctor: UserModel
 
-  @BelongsToMany(() => AnalysisModel, () => AppointmentAnalysisModel, 'appointment_id', 'analysis_id')
-  analysis: AnalysisModel
+  @BelongsToMany(() => AnalysisModel, {
+    through: () => AppointmentAnalysisModel,
+  })
+  analysis: AnalysisModel[]
 
-  @BelongsToMany(() => InoculationModel, () => AppointmentInoculationModel, 'appointment_id', 'inoculation_id')
-  inoculations: InoculationModel
+  @BelongsToMany(() => VaccineModel, {
+    through: () => AppointmentVaccineModel,
+  })
+  vaccine: AnalysisModel[]
 
-  @BelongsToMany(() => UltrasoundModel, () => AppointmentUltrasoundModel, 'appointment_id', 'ultrasound_id')
-  ultrasounds: UltrasoundModel
+  @BelongsToMany(() => UziModel, {
+    through: () => AppointmentUziModel,
+  })
+  uzi: AnalysisModel[]
+
+  @Column
+  doppler_id: number
+
+  @BelongsTo(() => DopplerModel, 'doppler_id')
+  doppler: DopplerModel
+
+  @Column({
+    type: DataType.TEXT
+  })
+  additional_information: string
+
+  diagnosis: DiagnosisModel
+
+  @Column({
+    type: DataType.TEXT,
+    defaultValue: MainConf.data.recommendedDefault
+  })
+  recommended: string
 }

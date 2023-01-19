@@ -1,10 +1,10 @@
 import { BaseModel } from "../../base/base.service";
 import { AutoIncrement, Column, ForeignKey, PrimaryKey, Table } from "sequelize-typescript";
 import { AppointmentModel } from "./appointment.model";
-import { AnalysisModel } from "./analysis.model";
+import { UziModel } from "./uzi.model";
 
 @Table
-export class AppointmentAnalysisModel extends BaseModel {
+export class AppointmentUziModel extends BaseModel {
   @PrimaryKey
   @AutoIncrement
   @Column
@@ -15,6 +15,6 @@ export class AppointmentAnalysisModel extends BaseModel {
   appointment_id: number
 
   @Column
-  @ForeignKey(() => AnalysisModel)
-  analysis_id: number
+  @ForeignKey(() => UziModel)
+  uzi_id: number
 }
