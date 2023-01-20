@@ -12,7 +12,7 @@ export class VaccineModel extends BaseModel {
   id: number
 
   @Column
-  vaccine_localization_id: string
+  vaccine_localization_id: number
 
   @BelongsTo(() => VaccineLocalizationReference, 'vaccine_localization_id')
   localization: VaccineLocalizationReference
@@ -24,7 +24,7 @@ export class VaccineModel extends BaseModel {
   microflora: VaccineMicrofloraReference
 
   @Column
-  vaccine_value_id: string
+  vaccine_value_id: number
 
   @BelongsTo(() => VaccineValueReference, 'vaccine_value_id')
   value: VaccineValueReference

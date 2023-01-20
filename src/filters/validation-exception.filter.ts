@@ -39,9 +39,11 @@ export class ValidationExceptionFilter extends BaseExceptionFilter implements Ex
         if (el == 'message')
           message = exception.getResponse()[el];
       })
-      err = message.map(el => {
-        return this.formatString(el);
-      });
+      if (message.map) {
+        err = message.map(el => {
+          return this.formatString(el);
+        });
+      }
     }
 
     this.sendResponse(response, exception.getStatus(), {

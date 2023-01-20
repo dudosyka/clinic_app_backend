@@ -11,7 +11,7 @@ import {LocalStrategy} from "../../strategies/local.strategy";
 import {JwtStrategy} from "../../strategies/jwt.strategy";
 import { BcryptUtil } from "../../utils/bcrypt.util";
 import { JwtUtil } from "../../utils/jwt.util";
-import { DiagnosisModel } from "./models/diagnosis.model";
+import { DiagnosisModel } from "../appointment/models/diagnosis.model";
 
 @Module({
     imports: [

@@ -1,5 +1,4 @@
-import { AutoIncrement, BelongsTo, Column, Model, PrimaryKey, Table } from "sequelize-typescript";
-import { DiagnosisModel } from "./diagnosis.model";
+import { AutoIncrement, Column, DataType, Model, PrimaryKey, Table } from "sequelize-typescript";
 
 @Table
 export class UserModel extends Model {
@@ -42,9 +41,8 @@ export class UserModel extends Model {
     @Column
     birthday: string
 
-    @Column
-    diagnosis_id: number
-
-    @BelongsTo(() => DiagnosisModel, "diagnosis_id")
-    diagnosis: DiagnosisModel
+    @Column({
+        type: DataType.TEXT
+    })
+    analysis: string
 }

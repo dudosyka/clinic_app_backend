@@ -10,4 +10,7 @@ export class DiagnosisModel extends BaseModel {
 
   @Column
   pregnancy: number
+
+  @Column
+  value: string
 }

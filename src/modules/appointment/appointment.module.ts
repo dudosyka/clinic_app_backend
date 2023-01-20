@@ -4,10 +4,8 @@ import { AppointmentModel } from "./models/appointment.model";
 import { AppointmentService } from "./services/appointment.service";
 import { AppointmentController } from "./controllers/appointment.controller";
 import { VaccineModel } from "./models/vaccine.model";
-import { AnalysisModel } from "./models/analysis.model";
 import { UziModel } from "./models/uzi.model";
 import { AppointmentVaccineModel } from "./models/appointment-vaccine.model";
-import { AppointmentAnalysisModel } from "./models/appointment-analysis.model";
 import { AppointmentUziModel } from "./models/appointment-uzi.model";
 import { UserModule } from "../user/user.module";
 import { DopplerModel } from "./models/doppler.model";
@@ -28,6 +26,8 @@ import { UternusScarReference } from "./models/references/uternus-scar.reference
 import { VaccineMicrofloraReference } from "./models/references/vaccine.microflora.reference";
 import { VaccineLocalizationReference } from "./models/references/vaccine-localization.reference";
 import { VaccineValueReference } from "./models/references/vaccine-value.reference";
+import { ReferencesService } from "./services/references.service";
+import { ReferencesController } from "./controllers/references.controller";
 
 @Module({
   imports: [
@@ -35,10 +35,8 @@ import { VaccineValueReference } from "./models/references/vaccine-value.referen
       DopplerModel,
       AppointmentModel,
       VaccineModel,
-      AnalysisModel,
       UziModel,
       AppointmentVaccineModel,
-      AppointmentAnalysisModel,
       AppointmentUziModel,
 
       AbTherapyReference,
@@ -61,8 +59,8 @@ import { VaccineValueReference } from "./models/references/vaccine-value.referen
     ]),
     UserModule
   ],
-  providers: [ AppointmentService ],
-  controllers: [ AppointmentController ],
+  providers: [ AppointmentService, ReferencesService ],
+  controllers: [ AppointmentController, ReferencesController ],
   exports: [ AppointmentService ]
 })
 export class AppointmentModule {}
