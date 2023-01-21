@@ -218,7 +218,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     if (model.is_first) {
       const other = await AppointmentModel.findAll();
 
-      if (other.length) {
+      if (other.length > 1) {
         await other[1].update({
           is_first: true
         }, TransactionUtil.getHost())
