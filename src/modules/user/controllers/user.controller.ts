@@ -80,7 +80,7 @@ export class UserController {
   @Delete(":id")
   @UseGuards(JwtAuthGuard)
   @HttpCode(ResponseStatus.NO_CONTENT)
-  public async remove(@Param("id") id: number): Promise<ResponseFilter<boolean>> {
-    return ResponseFilter.response<boolean>(await this.userService.remove({ where: { id } }), ResponseStatus.NO_CONTENT);
+  public async remove(@Param("id") id: number): Promise<ResponseFilter<void>> {
+    return ResponseFilter.response<void>(await this.userService.remove({ where: { id } }), ResponseStatus.NO_CONTENT);
   }
 }

@@ -1,5 +1,5 @@
 import { BaseModel } from "../../base/base.service";
-import { AutoIncrement, Column, PrimaryKey, Table } from "sequelize-typescript";
+import { AutoIncrement, Column, DataType, PrimaryKey, Table } from "sequelize-typescript";
 
 @Table
 export class DiagnosisModel extends BaseModel {
@@ -9,8 +9,10 @@ export class DiagnosisModel extends BaseModel {
   id: number
 
   @Column
-  pregnancy: number
+  pregnancy: string
 
-  @Column
+  @Column({
+    type: DataType.TEXT
+  })
   value: string
 }

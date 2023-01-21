@@ -28,11 +28,9 @@ export class BaseService<M extends Model> {
       return result;
   }
 
-  public async remove(query: any = {}): Promise<boolean> {
+  public async remove(query: any = {}): Promise<void> {
     const modelOnRemove = await this.getOne(query);
 
     await modelOnRemove.destroy(query);
-
-    return true;
   }
 }

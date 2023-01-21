@@ -55,6 +55,12 @@ export class AppointmentController {
     return ResponseFilter.response<AppointmentModel>(await this.appointmentService.update(updateDto), ResponseStatus.SUCCESS);
   }
 
+  @Delete(":id")
+  @HttpCode(ResponseStatus.NO_CONTENT)
+  public async remove(@Param('id') id: number): Promise<ResponseFilter<void>> {
+    return ResponseFilter.response<void>(await this.appointmentService.remove(id), ResponseStatus.NO_CONTENT);
+  }
+
   @Patch('/vaccine')
   @HttpCode(ResponseStatus.SUCCESS)
   public async updateVaccine(@Body() vaccineDto: VaccineUpdateDto): Promise<ResponseFilter<VaccineModel>> | never {
@@ -89,17 +95,5 @@ export class AppointmentController {
   @HttpCode(ResponseStatus.NO_CONTENT)
   public async removeUzi(@Param("id") id: number): Promise<ResponseFilter<void>> | never {
     return ResponseFilter.response<void>(await this.appointmentService.removeUzi(id), ResponseStatus.NO_CONTENT)
-  }
-
-  @Delete('/doppler/:id')
-  @HttpCode(ResponseStatus.NO_CONTENT)
-  public async removeDoppler(@Param("id") id: number): Promise<ResponseFilter<void>> | never {
-    return ResponseFilter.response<void>(await this.appointmentService.removeDoppler(id), ResponseStatus.NO_CONTENT)
-  }
-
-  @Delete('/diagnosis/:id')
-  @HttpCode(ResponseStatus.NO_CONTENT)
-  public async removeDiagnosis(@Param("id") id: number): Promise<ResponseFilter<void>> | never {
-    return ResponseFilter.response<void>(await this.appointmentService.removeDiagnosis(id), ResponseStatus.NO_CONTENT)
   }
 }

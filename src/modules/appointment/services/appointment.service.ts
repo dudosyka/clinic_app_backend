@@ -28,7 +28,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
   }
 
   public async checkIsFirstAppointment(patient_id: number): Promise<boolean> {
-    const appointmentModel = AppointmentModel.findOne({
+    const appointmentModel = await AppointmentModel.findOne({
       where: {
         patient_id
       }
@@ -50,7 +50,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     let doppler_id = null;
     if (createDto.doppler) {
       const doppler = createDto.doppler;
-      const dopplerModel = await DopplerModel.create({ ...doppler },  TransactionUtil.getHost()).catch(err => {
+      const dopplerModel = await DopplerModel.create({ ...doppler }, TransactionUtil.getHost()).catch(err => {
         if (!isPropagate)
           TransactionUtil.rollback()
         throw err;
@@ -61,7 +61,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     let diagnosis_id = null;
     if (createDto.diagnosis) {
       const diagnosis = createDto.diagnosis;
-      const diagnosisModel = await DiagnosisModel.create({ ...diagnosis },  TransactionUtil.getHost()).catch(err => {
+      const diagnosisModel = await DiagnosisModel.create({ ...diagnosis }, TransactionUtil.getHost()).catch(err => {
         if (!isPropagate)
           TransactionUtil.rollback()
         throw err;
@@ -74,7 +74,12 @@ export class AppointmentService extends BaseService<AppointmentModel> {
         throw new BadRequestException("first appointment has already created");
     }
 
-    const appointment = await AppointmentModel.create({ ...createDto, files, doppler_id, diagnosis_id },  TransactionUtil.getHost()).catch(err => {
+    const appointment = await AppointmentModel.create({
+      ...createDto,
+      files,
+      doppler_id,
+      diagnosis_id
+    }, TransactionUtil.getHost()).catch(err => {
       if (!isPropagate)
         TransactionUtil.rollback()
       throw err;
@@ -82,12 +87,15 @@ export class AppointmentService extends BaseService<AppointmentModel> {
 
     if (createDto.uzi) {
       const uzi = createDto.uzi;
-      const uziModel = await UziModel.create({ ...uzi },  TransactionUtil.getHost()).catch(err => {
+      const uziModel = await UziModel.create({ ...uzi }, TransactionUtil.getHost()).catch(err => {
         if (!isPropagate)
           TransactionUtil.rollback()
         throw err;
       });
-      await AppointmentUziModel.create({ appointment_id: appointment.id, uzi_id: uziModel.id },  TransactionUtil.getHost()).catch(err => {
+      await AppointmentUziModel.create({
+        appointment_id: appointment.id,
+        uzi_id: uziModel.id
+      }, TransactionUtil.getHost()).catch(err => {
         if (!isPropagate)
           TransactionUtil.rollback()
         throw err;
@@ -97,12 +105,15 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     if (createDto.vaccine) {
       const vaccines = createDto.vaccine;
       await Promise.all(vaccines.map(async vaccine => {
-        const vaccineModel = await VaccineModel.create({ ...vaccine },  TransactionUtil.getHost()).catch(err => {
+        const vaccineModel = await VaccineModel.create({ ...vaccine }, TransactionUtil.getHost()).catch(err => {
           if (!isPropagate)
             TransactionUtil.rollback()
           throw err;
         });
-        await AppointmentVaccineModel.create({ appointment_id: appointment.id, vaccine_id: vaccineModel.id },  TransactionUtil.getHost()).catch(err => {
+        await AppointmentVaccineModel.create({
+          appointment_id: appointment.id,
+          vaccine_id: vaccineModel.id
+        }, TransactionUtil.getHost()).catch(err => {
           throw err;
         });
       })).catch(err => {
@@ -123,7 +134,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
       where: {
         id
       },
-      include: [ { model: UserModel, include: [ DiagnosisModel ], as: "patient" }, VaccineModel, UziModel, DopplerModel ]
+      include: [{ model: UserModel, as: "patient" }, DiagnosisModel, VaccineModel, UziModel, DopplerModel]
     })
   }
 
@@ -133,7 +144,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
         patient_id
       },
       order: [
-       ["id", "DESC"]
+        ["id", "DESC"]
       ]
     });
 
@@ -146,23 +157,89 @@ export class AppointmentService extends BaseService<AppointmentModel> {
   public async update(updateDto: AppointmentUpdateDto): Promise<AppointmentModel> {
     const appointmentModel = await super.getOne({ where: { id: updateDto.id } });
 
+    if (updateDto.is_first)
+      throw new BadRequestException("You can`t change is_first status!")
+
     await appointmentModel.update({ ...updateDto });
 
     return appointmentModel;
   }
 
+  public async remove(id: number): Promise<void> {
+    const model = await super.getOne({ where: {id} });
+
+    TransactionUtil.setHost(await this.sequelize.transaction())
+
+    const uzi = (await AppointmentUziModel.findAll({
+      where: {
+        appointment_id: model.id
+      }
+    })).map(el => el.uzi_id)
+
+    const vaccine = (await AppointmentVaccineModel.findAll({
+      where: {
+        appointment_id: model.id
+      }
+    })).map(el => el.vaccine_id);
+
+    await model.destroy(TransactionUtil.getHost());
+
+    //Remove dependencies
+
+    await DiagnosisModel.destroy({
+      where: {
+        id: model.diagnosis_id
+      },
+      ...TransactionUtil.getHost()
+    })
+
+    await DopplerModel.destroy({
+      where: {
+        id: model.doppler_id
+      },
+      ...TransactionUtil.getHost()
+    })
+
+    await VaccineModel.destroy({
+      where: {
+        id: vaccine
+      },
+      ...TransactionUtil.getHost()
+    })
+
+    await UziModel.destroy({
+      where: {
+        id: uzi
+      },
+      ...TransactionUtil.getHost()
+    })
+
+    //If we remove "is_first" appointment and this user has other appointments we should to mark oldest as "is_first"
+    if (model.is_first) {
+      const other = await AppointmentModel.findAll();
+
+      if (other.length) {
+        await other[1].update({
+          is_first: true
+        }, TransactionUtil.getHost())
+      }
+    }
+
+    await TransactionUtil.commit();
+  }
+
   async updateVaccine(vaccineDto: VaccineUpdateDto): Promise<VaccineModel> {
-   const vaccineModel = await VaccineModel.findOne({
-     where: {
-       id: vaccineDto.id
-     }
-   });
+    const vaccineModel = await VaccineModel.findOne({
+      where: {
+        id: vaccineDto.id
+      }
+    });
 
-   if (!vaccineModel) {
-     throw new ModelNotFoundException(VaccineModel, vaccineDto.id)
-   }
+    if (!vaccineModel) {
+      throw new ModelNotFoundException(VaccineModel, vaccineDto.id)
+    }
 
-   await vaccineModel.update({ ...vaccineDto })
+    await vaccineModel.update({ ...vaccineDto })
 
     return vaccineModel;
   }
@@ -207,7 +284,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     });
 
     if (!diagnosisModel) {
-      throw new ModelNotFoundException(DopplerModel, diagnosisDto.id)
+      throw new ModelNotFoundException(DiagnosisModel, diagnosisDto.id)
     }
 
     await diagnosisModel.update({ ...diagnosisDto })
@@ -241,29 +318,4 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     await model.destroy();
   }
 
-  async removeDoppler(id: number) {
-    const model = await DopplerModel.findOne({
-      where: {
-        id
-      }
-    });
-
-    if (!model)
-      throw new ModelNotFoundException(DopplerModel, id)
-
-    await model.destroy();
-  }
-
-  async removeDiagnosis(id: number) {
-    const model = await DiagnosisModel.findOne({
-      where: {
-        id
-      }
-    });
-
-    if (!model)
-      throw new ModelNotFoundException(DiagnosisModel, id)
-
-    await model.destroy();
-  }
 }
