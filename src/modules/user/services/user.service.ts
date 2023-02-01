@@ -52,15 +52,23 @@ export class UserService extends BaseService<UserModel> {
     if (query.fullName) {
       const patientFullname = query.fullName.split(" ");
       where = {
-        surname: {
-          [Op.like]: `%${patientFullname[0]}%`
-        },
-        name: {
-          [Op.like]: `%${patientFullname[1]}%`
-        },
-        lastname: {
-          [Op.like]: `%${patientFullname[2]}%`
-        }
+        [Op.or]: [
+          {
+            surname: {
+              [Op.like]: `%${patientFullname[0]}%`
+            },
+          },
+          {
+            name: {
+              [Op.like]: `%${patientFullname[1]}%`
+            },
+          },
+          {
+            lastname: {
+              [Op.like]: `%${patientFullname[2]}%`
+            }
+          }
+        ]
       }
       console.log(where);
     }

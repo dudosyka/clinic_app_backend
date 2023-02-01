@@ -186,15 +186,23 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     if (filters.patientFullname) {
       const patientFullname = filters.patientFullname.split(" ");
       where = {
-        surname: {
-          [Op.like]: `%${patientFullname[0]}%`
-        },
-        name: {
-          [Op.like]: `%${patientFullname[1]}%`
-        },
-        lastname: {
-          [Op.like]: `%${patientFullname[2]}%`
-        }
+        [Op.or]: [
+          {
+            surname: {
+              [Op.like]: `%${patientFullname[0]}%`
+            },
+          },
+          {
+            name: {
+              [Op.like]: `%${patientFullname[1]}%`
+            },
+          },
+          {
+            lastname: {
+              [Op.like]: `%${patientFullname[2]}%`
+            }
+          }
+        ]
       }
     }
 
