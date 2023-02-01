@@ -3,4 +3,6 @@ export class UserFilterDto {
   fullName?: string;
 
   page?: number;
+
+  hasAppointment?: boolean
 }

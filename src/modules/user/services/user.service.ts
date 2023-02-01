@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { BaseService } from '../../base/base.service';
 import { UserUpdateDto } from '../dtos/user-update.dto';
 import {Op} from "sequelize";
+import {AppointmentModel} from "../../appointment/models/appointment.model";
 
 export class UserService extends BaseService<UserModel> {
   constructor(@Inject(AuthService) private authService: AuthService) {
@@ -82,8 +83,23 @@ export class UserService extends BaseService<UserModel> {
       page = query.page
 
 
-    if (query)
-      return super.getAll({
+    if (query) {
+      if (query.hasAppointment === true || query.hasAppointment === false) {
+        const hasFirstAppointmentUsers = (await AppointmentModel.findAll({
+          attributes: ['patient_id'],
+          where: {
+            is_first: true
+          }
+        })).map(el => el.patient_id);
+
+        if (query.hasAppointment === true) {
+          where.id = hasFirstAppointmentUsers;
+        } else {
+          where.id = {[Op.notIn]: hasFirstAppointmentUsers}
+        }
+      }
+
+      return await super.getAll({
         arguments: ["id", "name", "surname", "lastname", "birthday"],
         where: {
           ...where,
@@ -91,7 +107,8 @@ export class UserService extends BaseService<UserModel> {
         order: [['id', 'DESC']],
         offset: (page-1)*mainConf.limit,
         limit: page* mainConf.limit
-      });
+      });;
+    }
     else return super.getAll();
   }
 
