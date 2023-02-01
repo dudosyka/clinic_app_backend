@@ -28,6 +28,9 @@ import { VaccineLocalizationReference } from './models/references/vaccine-locali
 import { VaccineValueReference } from './models/references/vaccine-value.reference';
 import { ReferencesService } from './services/references.service';
 import { ReferencesController } from './controllers/references.controller';
+import {MulterModule} from "@nestjs/platform-express";
+import {MulterConfigModule} from "./multer-config.module";
+import {UserFilesModel} from "../user/models/user-files.model";
 
 @Module({
   imports: [
@@ -56,7 +59,11 @@ import { ReferencesController } from './controllers/references.controller';
       VaccineMicrofloraReference,
       VaccineLocalizationReference,
       VaccineValueReference,
+        UserFilesModel
     ]),
+    MulterModule.registerAsync({
+      useClass: MulterConfigModule
+    }),
     UserModule,
   ],
   providers: [AppointmentService, ReferencesService],

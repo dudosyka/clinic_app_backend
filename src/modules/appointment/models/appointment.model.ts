@@ -75,9 +75,4 @@ export class AppointmentModel extends BaseModel {
     type: DataType.TEXT,
   })
   recommended: string;
-
-  @Column({
-    type: DataType.TEXT,
-  })
-  files: string; //JSON array with base64 files
 }

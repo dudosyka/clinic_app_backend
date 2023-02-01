@@ -55,10 +55,4 @@ export class AppointmentCreateDto {
     message: 'recommended must be string',
   })
   recommended: string;
-
-  @IsString({
-    each: true,
-    message: 'files must be array of string',
-  })
-  files: string[];
 }

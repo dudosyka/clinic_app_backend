@@ -8,8 +8,8 @@ import {
   Param,
   Patch,
   Post,
-  Req,
-  UseGuards,
+  Req, UploadedFile,
+  UseGuards, UseInterceptors,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../guards/jwt-auth.guard';
 import {
@@ -29,6 +29,7 @@ import { DopplerModel } from '../models/doppler.model';
 import { DiagnosisUpdateDto } from '../dtos/diagnosis-update.dto';
 import { DiagnosisModel } from '../models/diagnosis.model';
 import {AppointmentFilterDto} from "../dtos/appointment-filter.dto";
+import {FileInterceptor} from "@nestjs/platform-express";
 
 @Controller('appointment')
 @UseGuards(JwtAuthGuard)
@@ -46,6 +47,26 @@ export class AppointmentController {
       await this.appointmentService.getAll(filters),
       ResponseStatus.SUCCESS,
     );
+  }
+
+  @Post('/:id/file/upload')
+  @HttpCode(ResponseStatus.NO_CONTENT)
+  @UseInterceptors(FileInterceptor('file'))
+  public async uploadFile(
+      @Param("id") id: number,
+      @UploadedFile() file: Express.Multer.File
+  ) {
+    await this.appointmentService.uploadFile(id, file).catch(err => {
+      throw err;
+    });
+  }
+
+  @Get('file/:id/read')
+  @HttpCode(ResponseStatus.SUCCESS)
+  public async readFile(
+      @Param('id') fileId: number,
+  ) {
+    return await this.appointmentService.getFileStream(fileId);
   }
 
   @Get('/last/:patient_id')

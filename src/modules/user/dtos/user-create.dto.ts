@@ -1,5 +1,5 @@
 import { UserRole } from '../../../confs/main.conf';
-import { IsNumber, IsString, ValidateIf } from 'class-validator';
+import {IsNumber, IsString, MinLength, ValidateIf} from 'class-validator';
 
 export class UserCreateDto {
   @IsNumber(
@@ -13,6 +13,7 @@ export class UserCreateDto {
   @IsString({
     message: 'login must be string',
   })
+  @MinLength(3)
   @ValidateIf((object) => object.role === 1)
   login?: string;
 
@@ -37,16 +38,19 @@ export class UserCreateDto {
   @IsString({
     message: 'surname must be string',
   })
+  @MinLength(3)
   surname: string;
 
   @IsString({
     message: 'name must be string',
   })
+  @MinLength(2)
   name: string;
 
   @IsString({
     message: 'lastname must be string',
   })
+  @MinLength(3)
   lastname: string;
 
   @IsString({

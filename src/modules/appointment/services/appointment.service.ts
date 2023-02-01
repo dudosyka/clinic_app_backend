@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import {Injectable, StreamableFile} from '@nestjs/common';
 import { AppointmentModel } from '../models/appointment.model';
 import { BaseService } from '../../base/base.service';
 import { AppointmentCreateDto } from '../dtos/appointment-create.dto';
@@ -21,6 +21,10 @@ import { DiagnosisUpdateDto } from '../dtos/diagnosis-update.dto';
 import {AppointmentFilterDto} from "../dtos/appointment-filter.dto";
 import {Op} from "sequelize";
 import mainConf from "../../../confs/main.conf";
+import {UserFilesModel} from "../../user/models/user-files.model";
+import {createReadStream} from 'fs';
+import {join} from 'path'
+import * as process from "process";
 
 @Injectable()
 export class AppointmentService extends BaseService<AppointmentModel> {
@@ -46,8 +50,6 @@ export class AppointmentService extends BaseService<AppointmentModel> {
       TransactionUtil.setHost(await this.sequelize.transaction());
       isPropagate = false;
     }
-
-    const files = JSON.stringify(createDto.files);
 
     let doppler_id = null;
     if (createDto.doppler) {
@@ -83,7 +85,6 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     const appointment = await AppointmentModel.create(
       {
         ...createDto,
-        files,
         doppler_id,
         diagnosis_id,
       },
@@ -152,7 +153,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
         id,
       },
       include: [
-        { model: UserModel, as: 'patient' },
+        { model: UserModel, as: 'patient', include: [ UserFilesModel ] },
         DiagnosisModel,
         VaccineModel,
         UziModel,
@@ -201,15 +202,13 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     if (filters.page)
       page = filters.page
 
-    const models = AppointmentModel.findAll({
+    return AppointmentModel.findAll({
       attributes: ['id', 'createdAt'],
       offset: (page-1)*mainConf.limit,
       limit: mainConf.limit * page,
       order,
       include: [ { model: UserModel, as: 'patient', where, attributes:['name', 'surname', 'lastname', 'birthday'] }, { model: UserModel, as: 'doctor',  attributes:['name', 'surname', 'lastname'] } ]
     });
-
-    return models;
   }
 
   public async update(
@@ -385,5 +384,34 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     if (!model) throw new ModelNotFoundException(UziModel, id);
 
     await model.destroy();
+  }
+
+  async uploadFile(id: number, file: Express.Multer.File): Promise<void> {
+    const model = await super.getOne({
+      where: {id}
+    }).catch(err => {
+      throw err;
+    });
+
+    await UserFilesModel.create({
+      user_id: model.patient_id,
+      path: file.filename,
+      name: file.originalname
+    })
+  }
+
+  async getFileStream(fileId: number) {
+    const fileModel = await UserFilesModel.findOne({
+      where: {
+        id: fileId
+      }
+    });
+
+    if (!fileModel)
+      throw new ModelNotFoundException(UserFilesModel, fileId)
+
+    console.log(process.cwd());
+    const file = createReadStream(join(process.cwd(), 'upload', fileModel.path));
+    return new StreamableFile(file);
   }
 }

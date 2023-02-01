@@ -1,18 +1,14 @@
 import {
-  AutoIncrement,
+  BelongsToMany,
   Column,
   DataType,
   Model,
-  PrimaryKey,
   Table,
 } from 'sequelize-typescript';
+import {UserFilesModel} from "./user-files.model";
 
 @Table
 export class UserModel extends Model {
-  @PrimaryKey
-  @AutoIncrement
-  @Column
-  id: number;
 
   @Column({
     allowNull: false,
@@ -51,4 +47,7 @@ export class UserModel extends Model {
     type: DataType.TEXT,
   })
   analysis: string;
+
+  @BelongsToMany(() => UserFilesModel, () => UserFilesModel, 'user_id', 'id')
+  files: UserFilesModel[]
 }
