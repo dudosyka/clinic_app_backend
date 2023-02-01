@@ -18,6 +18,9 @@ import { UserModel } from '../../user/models/user.model';
 import { DiagnosisModel } from '../models/diagnosis.model';
 import { BadRequestException } from '../../../exceptions/bad-request.exception';
 import { DiagnosisUpdateDto } from '../dtos/diagnosis-update.dto';
+import {AppointmentFilterDto} from "../dtos/appointment-filter.dto";
+import {Op} from "sequelize";
+import mainConf from "../../../confs/main.conf";
 
 @Injectable()
 export class AppointmentService extends BaseService<AppointmentModel> {
@@ -170,6 +173,43 @@ export class AppointmentService extends BaseService<AppointmentModel> {
       throw new ModelNotFoundException(AppointmentModel, null);
 
     return await this.getOne(models[0].id);
+  }
+
+  public async getAll(filters: AppointmentFilterDto) {
+
+    let order = [];
+    if (filters.sortDate)
+      order = [['createdAt', filters.sortDate]]
+
+    let where = {}
+    if (filters.patientFullname) {
+      const patientFullname = filters.patientFullname.split(" ");
+      where = {
+        surname: {
+          [Op.like]: `%${patientFullname[0]}%`
+        },
+        name: {
+          [Op.like]: `%${patientFullname[1]}%`
+        },
+        lastname: {
+          [Op.like]: `%${patientFullname[2]}%`
+        }
+      }
+    }
+
+    let page = 1;
+    if (filters.page)
+      page = filters.page
+
+    const models = AppointmentModel.findAll({
+      attributes: ['id'],
+      offset: (page-1)*mainConf.limit,
+      limit: mainConf.limit * page,
+      order,
+      include: [ { model: UserModel, as: 'patient', where, attributes:['name', 'surname', 'lastname', 'birthday'] }, { model: UserModel, as: 'doctor',  attributes:['name', 'surname', 'lastname'] } ]
+    });
+
+    return models;
   }
 
   public async update(

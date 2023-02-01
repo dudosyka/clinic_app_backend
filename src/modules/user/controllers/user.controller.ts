@@ -7,7 +7,7 @@ import {
   Inject,
   Param,
   Patch,
-  Post,
+  Post, Req,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -19,10 +19,10 @@ import {
 } from '../../../filters/response.filter';
 import { UserModel } from '../models/user.model';
 import { UserService } from '../services/user.service';
-import { UserRole } from '../../../confs/main.conf';
 import { UserCreateDto } from '../dtos/user-create.dto';
 import { UserUpdateDto } from '../dtos/user-update.dto';
 import { JwtAuthGuard } from '../../../guards/jwt-auth.guard';
+import { UserFilterDto } from '../dtos/user-filter.dto';
 
 @Controller('user')
 export class UserController {
@@ -35,7 +35,7 @@ export class UserController {
   @Post('login')
   @HttpCode(ResponseStatus.SUCCESS)
   public async login(@Request() req) {
-    return ResponseFilter.response<string>(
+    return ResponseFilter.response<{ token: string, model: UserModel }>(
       await this.authService.signUser(req.user),
       ResponseStatus.SUCCESS,
     );
@@ -64,24 +64,26 @@ export class UserController {
     );
   }
 
-  @Get('/')
+  @Post('/all')
   @UseGuards(JwtAuthGuard)
   @HttpCode(ResponseStatus.SUCCESS)
-  public async getAll(): Promise<ResponseFilter<UserModel[]>> {
+  public async getAll(
+      @Body('filters') filters: UserFilterDto
+  ): Promise<ResponseFilter<UserModel[]>> {
     return ResponseFilter.response<UserModel[]>(
-      await this.userService.getAll(),
+      await this.userService.getAll(filters),
       ResponseStatus.SUCCESS,
     );
   }
 
-  @Get('/role/:role')
+  @Get('/current')
   @UseGuards(JwtAuthGuard)
   @HttpCode(ResponseStatus.SUCCESS)
-  public async getByRole(
-    @Param('role') role: UserRole,
-  ): Promise<ResponseFilter<UserModel[]>> {
-    return ResponseFilter.response<UserModel[]>(
-      await this.userService.getAll({ role }),
+  public async getByToken(
+    @Req() req: any,
+  ): Promise<ResponseFilter<UserModel>> {
+    return ResponseFilter.response<UserModel>(
+      await this.userService.getOne({ where: { id: req.user.id } }),
       ResponseStatus.SUCCESS,
     );
   }

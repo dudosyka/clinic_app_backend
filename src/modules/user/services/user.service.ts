@@ -1,11 +1,12 @@
 import { UserCreateDto } from '../dtos/user-create.dto';
 import { UserModel } from '../models/user.model';
-import { UserRole } from '../../../confs/main.conf';
+import mainConf, { UserRole } from '../../../confs/main.conf';
 import { BadRequestException } from '../../../exceptions/bad-request.exception';
 import { Inject } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { BaseService } from '../../base/base.service';
 import { UserUpdateDto } from '../dtos/user-update.dto';
+import {Op} from "sequelize";
 
 export class UserService extends BaseService<UserModel> {
   constructor(@Inject(AuthService) private authService: AuthService) {
@@ -28,11 +29,51 @@ export class UserService extends BaseService<UserModel> {
   }
 
   public async getAll(query: any = null): Promise<UserModel[]> {
+    if (!query) {
+      let page = 1;
+      return super.getAll({
+        arguments: ["id", "name", "surname", "lastname", "birthday"],
+        offset: (page-1)*mainConf.limit,
+        limit: page* mainConf.limit,
+        order: [['id', 'DESC']],
+      });
+
+    }
+    let where: any = {};
+    if (query.fullName) {
+      const patientFullname = query.fullName.split(" ");
+      where = {
+        surname: {
+          [Op.like]: `%${patientFullname[0]}%`
+        },
+        name: {
+          [Op.like]: `%${patientFullname[1]}%`
+        },
+        lastname: {
+          [Op.like]: `%${patientFullname[2]}%`
+        }
+      }
+      console.log(where);
+    }
+
+    if (query.role) {
+      where.role = query.role;
+    }
+
+    let page = 1;
+    if (query.page)
+      page = query.page
+
+
     if (query)
       return super.getAll({
+        arguments: ["id", "name", "surname", "lastname", "birthday"],
         where: {
-          ...query,
+          ...where,
         },
+        order: [['id', 'DESC']],
+        offset: (page-1)*mainConf.limit,
+        limit: page* mainConf.limit
       });
     else return super.getAll();
   }

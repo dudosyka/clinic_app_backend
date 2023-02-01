@@ -40,7 +40,10 @@ export class AuthService {
       throw new ModelNotFoundException(UserModel, null);
     }
 
-    return this.jwt.signUser(user);
+    return {
+      model: user,
+      token: this.jwt.signUser(user)
+    };
   }
 
   public async generateHash(str: string = ''): Promise<string> {

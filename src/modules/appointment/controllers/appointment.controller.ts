@@ -28,6 +28,7 @@ import { DopplerUpdateDto } from '../dtos/doppler-update.dto';
 import { DopplerModel } from '../models/doppler.model';
 import { DiagnosisUpdateDto } from '../dtos/diagnosis-update.dto';
 import { DiagnosisModel } from '../models/diagnosis.model';
+import {AppointmentFilterDto} from "../dtos/appointment-filter.dto";
 
 @Controller('appointment')
 @UseGuards(JwtAuthGuard)
@@ -36,11 +37,13 @@ export class AppointmentController {
     @Inject(AppointmentService) private appointmentService: AppointmentService,
   ) {}
 
-  @Get('')
+  @Post('/all')
   @HttpCode(ResponseStatus.SUCCESS)
-  public async getAll(): Promise<ResponseFilter<AppointmentModel[]>> {
+  public async getAll(
+      @Body('filters') filters: AppointmentFilterDto
+  ): Promise<ResponseFilter<AppointmentModel[]>> {
     return ResponseFilter.response<AppointmentModel[]>(
-      await this.appointmentService.getAll(),
+      await this.appointmentService.getAll(filters),
       ResponseStatus.SUCCESS,
     );
   }

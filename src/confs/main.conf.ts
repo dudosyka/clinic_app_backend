@@ -22,4 +22,5 @@ export default {
   },
   devPort: 3000,
   prodPort: 8082,
+  limit: 50,
 };
