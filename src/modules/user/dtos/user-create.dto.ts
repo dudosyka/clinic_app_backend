@@ -56,6 +56,7 @@ export class UserCreateDto {
   @IsString({
     message: 'birthday must be string',
   })
+  @MinLength(10)
   @ValidateIf((object) => object.role === 2)
   birthday?: string;
 }
