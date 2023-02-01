@@ -22,6 +22,15 @@ export class UserService extends BaseService<UserModel> {
       let login = create.login;
       if (!create.login) login = `user_${Date.now()}`;
 
+      const checkUnique = await UserModel.findOne({
+        where: {
+          login
+        }
+      });
+
+      if (checkUnique)
+        throw new BadRequestException("Login must be unique")
+
       return UserModel.create({ ...create, hash, login });
     }
 
