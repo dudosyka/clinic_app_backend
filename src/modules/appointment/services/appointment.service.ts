@@ -202,7 +202,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
       page = filters.page
 
     const models = AppointmentModel.findAll({
-      attributes: ['id'],
+      attributes: ['id', 'createdAt'],
       offset: (page-1)*mainConf.limit,
       limit: mainConf.limit * page,
       order,
