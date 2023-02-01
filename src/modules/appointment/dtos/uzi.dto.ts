@@ -1,14 +1,16 @@
-import { IsNumber, IsString } from "class-validator";
+import { IsNumber, IsString } from 'class-validator';
 
 export class UziDto {
-
   @IsString({
-    message: "value must be string"
+    message: 'value must be string',
   })
-  value: string
+  value: string;
 
-  @IsNumber({}, {
-    message: "timestamp must be number"
-  })
-  timestamp: number
+  @IsNumber(
+    {},
+    {
+      message: 'timestamp must be number',
+    },
+  )
+  timestamp: number;
 }

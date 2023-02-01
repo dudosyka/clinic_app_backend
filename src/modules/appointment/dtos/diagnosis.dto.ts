@@ -1,13 +1,13 @@
-import { IsString } from "class-validator";
+import { IsString } from 'class-validator';
 
 export class DiagnosisDto {
   @IsString({
-    message: "pregnancy must be string"
+    message: 'pregnancy must be string',
   })
-  pregnancy: string
+  pregnancy: string;
 
   @IsString({
-    message: "value must be string"
+    message: 'value must be string',
   })
-  value: string
+  value: string;
 }

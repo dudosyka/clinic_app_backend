@@ -1,23 +1,23 @@
-import { IsString } from "class-validator";
+import { IsString } from 'class-validator';
 
 export class DopplerDto {
   @IsString({
-    message: "date_of_hemodynamic_disorder must be string"
+    message: 'date_of_hemodynamic_disorder must be string',
   })
-  date_of_hemodynamic_disorder: string
+  date_of_hemodynamic_disorder: string;
 
   @IsString({
-    message: "pregnancy_course must be string"
+    message: 'pregnancy_course must be string',
   })
-  pregnancy_course: string
+  pregnancy_course: string;
 
   @IsString({
-    message: "objective_research must be string"
+    message: 'objective_research must be string',
   })
-  objective_research: string
+  objective_research: string;
 
   @IsString({
-    message: "gynecological_examination must be string"
+    message: 'gynecological_examination must be string',
   })
-  gynecological_examination: string
+  gynecological_examination: string;
 }

@@ -1,3 +1,3 @@
 export class UserFilterDto {
-  role: number
+  role: number;
 }

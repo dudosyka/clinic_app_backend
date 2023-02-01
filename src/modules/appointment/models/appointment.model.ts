@@ -1,4 +1,4 @@
-import { BaseModel } from "../../base/base.service";
+import { BaseModel } from '../../base/base.service';
 import {
   AutoIncrement,
   BelongsTo,
@@ -6,79 +6,78 @@ import {
   Column,
   DataType,
   PrimaryKey,
-  Table
-} from "sequelize-typescript";
-import { UserModel } from "../../user/models/user.model";
-import { AppointmentVaccineModel } from "./appointment-vaccine.model";
-import { UziModel } from "./uzi.model";
-import { VaccineModel } from "./vaccine.model";
-import { AppointmentUziModel } from "./appointment-uzi.model";
-import { DopplerModel } from "./doppler.model";
-import { DiagnosisModel } from "./diagnosis.model";
+  Table,
+} from 'sequelize-typescript';
+import { UserModel } from '../../user/models/user.model';
+import { AppointmentVaccineModel } from './appointment-vaccine.model';
+import { UziModel } from './uzi.model';
+import { VaccineModel } from './vaccine.model';
+import { AppointmentUziModel } from './appointment-uzi.model';
+import { DopplerModel } from './doppler.model';
+import { DiagnosisModel } from './diagnosis.model';
 
 @Table
 export class AppointmentModel extends BaseModel {
-
   @PrimaryKey
   @AutoIncrement
   @Column
-  id: number
+  id: number;
 
   @Column({
-    defaultValue: false
+    defaultValue: false,
   })
-  is_first: boolean
+  is_first: boolean;
 
   @Column({
-    allowNull: false
+    allowNull: false,
   })
-  patient_id: number
+  patient_id: number;
 
   @BelongsTo(() => UserModel, 'patient_id')
-  patient: UserModel
+  patient: UserModel;
 
   @Column({
-    allowNull: false
+    allowNull: false,
   })
-  doctor_id: number
+  doctor_id: number;
 
   @BelongsTo(() => UserModel, 'doctor_id')
-  doctor: UserModel
+  doctor: UserModel;
 
   @BelongsToMany(() => VaccineModel, {
     through: () => AppointmentVaccineModel,
   })
-  vaccine: VaccineModel[]
+  vaccine: VaccineModel[];
 
   @BelongsToMany(() => UziModel, {
     through: () => AppointmentUziModel,
   })
-  uzi: UziModel[]
+  uzi: UziModel[];
 
   @Column
-  doppler_id: number
+  doppler_id: number;
 
   @BelongsTo(() => DopplerModel, 'doppler_id')
-  doppler: DopplerModel
+  doppler: DopplerModel;
 
   @Column({
-    type: DataType.TEXT
+    type: DataType.TEXT,
   })
-  additional_information: string
+  additional_information: string;
 
   @Column
-  diagnosis_id: number
+  diagnosis_id: number;
 
-  @BelongsTo(() => DiagnosisModel, "diagnosis_id")
-  diagnosis: DiagnosisModel
-
-  @Column({
-    type: DataType.TEXT,
-  })
-  recommended: string
+  @BelongsTo(() => DiagnosisModel, 'diagnosis_id')
+  diagnosis: DiagnosisModel;
 
   @Column({
     type: DataType.TEXT,
   })
-  files: string //JSON array with base64 files
+  recommended: string;
+
+  @Column({
+    type: DataType.TEXT,
+  })
+  files: string; //JSON array with base64 files
 }

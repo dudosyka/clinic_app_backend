@@ -1,3 +1,3 @@
 export default {
-  passphrase: "sDxPquF5"
+  passphrase: 'sDxPquF5',
 };

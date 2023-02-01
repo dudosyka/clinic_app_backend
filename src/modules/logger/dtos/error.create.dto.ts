@@ -1,6 +1,6 @@
 export type ErrorCreateDto = {
-  name: String,
-  message: String,
-  stack: String,
+  name: string;
+  message: string;
+  stack: string;
   // image?: String
-}
+};

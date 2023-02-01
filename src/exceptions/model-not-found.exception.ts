@@ -1,8 +1,8 @@
-import { HttpException } from "@nestjs/common";
+import { HttpException } from '@nestjs/common';
 
 export class ModelNotFoundException<T> extends HttpException {
   constructor(model: T, id: number) {
-    const regex = new RegExp("(class)\\s(\\w+)\\s(extends).*");
+    const regex = new RegExp('(class)\\s(\\w+)\\s(extends).*');
     let modelName;
 
     try {
@@ -11,11 +11,13 @@ export class ModelNotFoundException<T> extends HttpException {
       modelName = model.toString();
     }
 
-    super(JSON.stringify({
-      id,
-      model,
-      text: `${modelName} with ${id} not found`
-    }), 404);
+    super(
+      JSON.stringify({
+        id,
+        model,
+        text: `${modelName} with ${id} not found`,
+      }),
+      404,
+    );
   }
-
 }

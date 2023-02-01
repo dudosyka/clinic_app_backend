@@ -1,21 +1,25 @@
-import * as dbConf from "./db.conf";
+import * as dbConf from './db.conf';
 
 export enum ProjectState {
-  DEV, TEST_PROD, PROD,
+  DEV,
+  TEST_PROD,
+  PROD,
 }
 
 export enum UserRole {
-  Admin, Doctor, Patient
+  Admin,
+  Doctor,
+  Patient,
 }
 
 export default {
   isDev: ProjectState.DEV,
   jwtConstants: {
-    secret: "SECRET_KEY"
+    secret: 'SECRET_KEY',
   },
   db: {
-    ...dbConf
+    ...dbConf,
   },
   devPort: 3000,
-  prodPort: 8082
+  prodPort: 8082,
 };

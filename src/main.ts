@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import {ValidationPipe} from "@nestjs/common";
-import mainConf, {ProjectState} from "./confs/main.conf";
+import { ValidationPipe } from '@nestjs/common';
+import mainConf, { ProjectState } from './confs/main.conf';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -9,6 +9,8 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
   app.enableCors();
 
-  await app.listen(mainConf.isDev == ProjectState.DEV ? mainConf.devPort : mainConf.prodPort);
+  await app.listen(
+    mainConf.isDev == ProjectState.DEV ? mainConf.devPort : mainConf.prodPort,
+  );
 }
 bootstrap();

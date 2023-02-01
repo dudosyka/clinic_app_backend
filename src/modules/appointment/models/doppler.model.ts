@@ -1,22 +1,22 @@
-import { BaseModel } from "../../base/base.service";
-import { AutoIncrement, Column, PrimaryKey, Table } from "sequelize-typescript";
+import { BaseModel } from '../../base/base.service';
+import { AutoIncrement, Column, PrimaryKey, Table } from 'sequelize-typescript';
 
 @Table
 export class DopplerModel extends BaseModel {
   @PrimaryKey
   @AutoIncrement
   @Column
-  id: number
+  id: number;
 
   @Column
-  date_of_hemodynamic_disorder: string
+  date_of_hemodynamic_disorder: string;
 
   @Column
-  pregnancy_course: string
+  pregnancy_course: string;
 
   @Column
-  objective_research: string
+  objective_research: string;
 
   @Column
-  gynecological_examination: string
+  gynecological_examination: string;
 }

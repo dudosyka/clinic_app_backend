@@ -1,3 +1,3 @@
 export class SearchFilter<T> {
-  filters: T
+  filters: T;
 }

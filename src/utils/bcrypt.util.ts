@@ -1,5 +1,5 @@
-import * as bcrypt from "bcrypt";
-import { Injectable } from "@nestjs/common";
+import * as bcrypt from 'bcrypt';
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class BcryptUtil {
@@ -22,8 +22,7 @@ export class BcryptUtil {
   public compare(str: string, hash: string): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
       bcrypt.compare(str, hash, (err, ok) => {
-        if (!ok)
-          reject(err);
+        if (!ok) reject(err);
         resolve(ok);
       });
     });
