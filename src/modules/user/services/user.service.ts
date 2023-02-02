@@ -8,6 +8,7 @@ import { BaseService } from '../../base/base.service';
 import { UserUpdateDto } from '../dtos/user-update.dto';
 import {Op} from "sequelize";
 import {AppointmentModel} from "../../appointment/models/appointment.model";
+import {UserFilterDto} from "../dtos/user-filter.dto";
 
 export class UserService extends BaseService<UserModel> {
   constructor(@Inject(AuthService) private authService: AuthService) {
@@ -38,7 +39,7 @@ export class UserService extends BaseService<UserModel> {
     throw new BadRequestException('user.role invalid');
   }
 
-  public async getAll(query: any = null): Promise<UserModel[]> {
+  public async getAll(query: UserFilterDto | null = null): Promise<UserModel[]> {
     if (!query) {
       let page = 1;
       return super.getAll({
@@ -49,6 +50,9 @@ export class UserService extends BaseService<UserModel> {
       });
 
     }
+
+    console.log(query);
+
     let where: any = {};
     if (query.fullName) {
       const patientFullname = query.fullName.split(" ");
@@ -71,17 +75,15 @@ export class UserService extends BaseService<UserModel> {
           }
         ]
       }
-      console.log(where);
     }
 
-    if (query.role) {
+    if (query.role || query.role == 0) {
       where.role = query.role;
     }
 
     let page = 1;
     if (query.page)
       page = query.page
-
 
     if (query) {
       if (query.hasAppointment === true || query.hasAppointment === false) {
@@ -107,7 +109,7 @@ export class UserService extends BaseService<UserModel> {
         order: [['id', 'DESC']],
         offset: (page-1)*mainConf.limit,
         limit: page* mainConf.limit
-      });;
+      });
     }
     else return super.getAll();
   }
@@ -123,5 +125,17 @@ export class UserService extends BaseService<UserModel> {
     await userModel.update(update);
 
     return userModel;
+  }
+
+  public async remove(id: number) {
+    await AppointmentModel.destroy({
+      where: {
+        [Op.or]: [
+          { patient_id: id },
+          { doctor_id: id }
+        ]
+      }
+    })
+    return await super.remove({where: {id}})
   }
 }

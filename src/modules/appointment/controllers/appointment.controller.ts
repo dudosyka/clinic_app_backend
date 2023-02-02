@@ -20,14 +20,6 @@ import { AppointmentModel } from '../models/appointment.model';
 import { AppointmentService } from '../services/appointment.service';
 import { AppointmentCreateDto } from '../dtos/appointment-create.dto';
 import { AppointmentUpdateDto } from '../dtos/appointment-update.dto';
-import { VaccineModel } from '../models/vaccine.model';
-import { VaccineUpdateDto } from '../dtos/vaccine-update.dto';
-import { UziUpdateDto } from '../dtos/uzi-update.dto';
-import { UziModel } from '../models/uzi.model';
-import { DopplerUpdateDto } from '../dtos/doppler-update.dto';
-import { DopplerModel } from '../models/doppler.model';
-import { DiagnosisUpdateDto } from '../dtos/diagnosis-update.dto';
-import { DiagnosisModel } from '../models/diagnosis.model';
 import {AppointmentFilterDto} from "../dtos/appointment-filter.dto";
 import {FileInterceptor} from "@nestjs/platform-express";
 
@@ -49,14 +41,14 @@ export class AppointmentController {
     );
   }
 
-  @Post('/:id/file/upload')
+  @Post('/:userId/file/upload')
   @HttpCode(ResponseStatus.NO_CONTENT)
   @UseInterceptors(FileInterceptor('file'))
   public async uploadFile(
-      @Param("id") id: number,
+      @Param("userId") userId: number,
       @UploadedFile() file: Express.Multer.File
   ) {
-    await this.appointmentService.uploadFile(id, file).catch(err => {
+    await this.appointmentService.uploadFile(userId, file).catch(err => {
       throw err;
     });
   }
@@ -85,8 +77,8 @@ export class AppointmentController {
   public async getOne(
     @Param('id') id: number,
   ): Promise<ResponseFilter<AppointmentModel>> | never {
-    return ResponseFilter.response<AppointmentModel>(
-      await this.appointmentService.getOne(id),
+    return ResponseFilter.response<{ id, is_first, patient, doctor, value }>(
+      await this.appointmentService._getOne(id),
       ResponseStatus.SUCCESS,
     );
   }
@@ -121,72 +113,6 @@ export class AppointmentController {
   public async remove(@Param('id') id: number): Promise<ResponseFilter<void>> {
     return ResponseFilter.response<void>(
       await this.appointmentService.remove(id),
-      ResponseStatus.NO_CONTENT,
-    );
-  }
-
-  @Patch('/vaccine')
-  @HttpCode(ResponseStatus.SUCCESS)
-  public async updateVaccine(
-    @Body() vaccineDto: VaccineUpdateDto,
-  ): Promise<ResponseFilter<VaccineModel>> | never {
-    return ResponseFilter.response<VaccineModel>(
-      await this.appointmentService.updateVaccine(vaccineDto),
-      ResponseStatus.SUCCESS,
-    );
-  }
-
-  @Patch('/uzi')
-  @HttpCode(ResponseStatus.SUCCESS)
-  public async updateUzi(
-    @Body() uziDto: UziUpdateDto,
-  ): Promise<ResponseFilter<UziModel>> | never {
-    return ResponseFilter.response<UziModel>(
-      await this.appointmentService.updateUzi(uziDto),
-      ResponseStatus.SUCCESS,
-    );
-  }
-
-  @Patch('/doppler')
-  @HttpCode(ResponseStatus.SUCCESS)
-  public async updateDoppler(
-    @Body() dopplerDto: DopplerUpdateDto,
-  ): Promise<ResponseFilter<DopplerModel>> | never {
-    return ResponseFilter.response<DopplerModel>(
-      await this.appointmentService.updateDoppler(dopplerDto),
-      ResponseStatus.SUCCESS,
-    );
-  }
-
-  @Patch('/diagnosis')
-  @HttpCode(ResponseStatus.SUCCESS)
-  public async updateDiagnosis(
-    @Body() diagnosisDto: DiagnosisUpdateDto,
-  ): Promise<ResponseFilter<DiagnosisModel>> | never {
-    return ResponseFilter.response<DiagnosisModel>(
-      await this.appointmentService.updateDiagnosis(diagnosisDto),
-      ResponseStatus.SUCCESS,
-    );
-  }
-
-  @Delete('/vaccine/:id')
-  @HttpCode(ResponseStatus.NO_CONTENT)
-  public async removeVaccine(
-    @Param('id') id: number,
-  ): Promise<ResponseFilter<void>> | never {
-    return ResponseFilter.response<void>(
-      await this.appointmentService.removeVaccine(id),
-      ResponseStatus.NO_CONTENT,
-    );
-  }
-
-  @Delete('/uzi/:id')
-  @HttpCode(ResponseStatus.NO_CONTENT)
-  public async removeUzi(
-    @Param('id') id: number,
-  ): Promise<ResponseFilter<void>> | never {
-    return ResponseFilter.response<void>(
-      await this.appointmentService.removeUzi(id),
       ResponseStatus.NO_CONTENT,
     );
   }

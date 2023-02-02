@@ -7,6 +7,7 @@ export class JwtUtil {
   constructor(private jwtService: JwtService) {}
 
   public signUser(user: UserModel): string {
+    console.log(user.role);
     return this.jwtService.sign({
       userId: user.id,
       role: user.role,

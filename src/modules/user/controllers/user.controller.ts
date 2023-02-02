@@ -23,6 +23,7 @@ import { UserCreateDto } from '../dtos/user-create.dto';
 import { UserUpdateDto } from '../dtos/user-update.dto';
 import { JwtAuthGuard } from '../../../guards/jwt-auth.guard';
 import { UserFilterDto } from '../dtos/user-filter.dto';
+import {AdminGuard} from "../../../guards/admin.guard";
 
 @Controller('user')
 export class UserController {
@@ -101,7 +102,7 @@ export class UserController {
   }
 
   @Patch('')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @HttpCode(ResponseStatus.SUCCESS)
   public async update(
     @Body() update: UserUpdateDto,
@@ -113,11 +114,11 @@ export class UserController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @HttpCode(ResponseStatus.NO_CONTENT)
   public async remove(@Param('id') id: number): Promise<ResponseFilter<void>> {
     return ResponseFilter.response<void>(
-      await this.userService.remove({ where: { id } }),
+      await this.userService.remove(id),
       ResponseStatus.NO_CONTENT,
     );
   }

@@ -3,12 +3,7 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { AppointmentModel } from './models/appointment.model';
 import { AppointmentService } from './services/appointment.service';
 import { AppointmentController } from './controllers/appointment.controller';
-import { VaccineModel } from './models/vaccine.model';
-import { UziModel } from './models/uzi.model';
-import { AppointmentVaccineModel } from './models/appointment-vaccine.model';
-import { AppointmentUziModel } from './models/appointment-uzi.model';
 import { UserModule } from '../user/user.module';
-import { DopplerModel } from './models/doppler.model';
 import { AbTherapyReference } from './models/references/ab-therapy.reference';
 import { DiabetesMelitusReference } from './models/references/diabetes-melitus.reference';
 import { EyeDiseaseReference } from './models/references/eye-disease.reference';
@@ -35,12 +30,7 @@ import {UserFilesModel} from "../user/models/user-files.model";
 @Module({
   imports: [
     SequelizeModule.forFeature([
-      DopplerModel,
       AppointmentModel,
-      VaccineModel,
-      UziModel,
-      AppointmentVaccineModel,
-      AppointmentUziModel,
 
       AbTherapyReference,
       DiabetesMelitusReference,

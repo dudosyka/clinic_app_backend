@@ -1,5 +1,5 @@
 import {MulterModuleOptions, MulterOptionsFactory} from "@nestjs/platform-express";
-import {diskStorage,MulterError} from "multer";
+import {diskStorage} from "multer";
 
 export class MulterConfigModule implements MulterOptionsFactory {
     createMulterOptions(): Promise<MulterModuleOptions> | MulterModuleOptions {
