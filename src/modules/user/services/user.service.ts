@@ -166,19 +166,10 @@ export class UserService extends BaseService<UserModel> {
 
     const key = keyConf.split('=')[1];
 
-    if (
-        (!adminSetup.key) || (!adminSetup.password) || (key.length < 1)
+    if ( (!adminSetup.password)
     ) throw new BadRequestException("");
 
-    if (adminExists && adminSetup.key.trim() == key.trim() && adminSetup.password) {
-      checkAdmins.hash = await this.authService.generateHash(adminSetup.password);
-      await checkAdmins.save();
-      return;
-    }
-
-    if (adminSetup.key.trim() != key.trim()) throw new ForbiddenException();
-
-    if (!adminExists && adminSetup.key.trim() == key.trim() && adminSetup.password) {
+    if (!adminExists && adminSetup.password) {
       await UserModel.create({
         name: "admin",
         surname: "admin",
@@ -187,6 +178,18 @@ export class UserService extends BaseService<UserModel> {
         role: 0,
         hash: await this.authService.generateHash(adminSetup.password)
       })
+      return;
     }
+
+    if (!adminSetup.key || (key.length < 1)) throw new ForbiddenException()
+
+    if (adminExists && adminSetup.key.trim() != key.trim() && adminSetup.password) {
+      checkAdmins.hash = await this.authService.generateHash(adminSetup.password);
+      await checkAdmins.save();
+      return;
+    } else {
+      throw new BadRequestException("")
+    }
+
   }
 }
