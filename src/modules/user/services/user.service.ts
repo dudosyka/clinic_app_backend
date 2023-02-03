@@ -170,7 +170,7 @@ export class UserService extends BaseService<UserModel> {
         (!adminSetup.key) || (!adminSetup.password) || (key.length < 1)
     ) throw new BadRequestException("");
 
-    if (adminExists && adminSetup.key == key && adminSetup.password) {
+    if (adminExists && adminSetup.key.trim() == key.trim() && adminSetup.password) {
       checkAdmins.hash = await this.authService.generateHash(adminSetup.password);
       await checkAdmins.save();
       return;
