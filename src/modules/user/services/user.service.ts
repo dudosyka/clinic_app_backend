@@ -2,16 +2,22 @@ import { UserCreateDto } from '../dtos/user-create.dto';
 import { UserModel } from '../models/user.model';
 import mainConf, { UserRole } from '../../../confs/main.conf';
 import { BadRequestException } from '../../../exceptions/bad-request.exception';
-import { Inject } from '@nestjs/common';
+import {ForbiddenException, Inject} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { BaseService } from '../../base/base.service';
 import { UserUpdateDto } from '../dtos/user-update.dto';
 import {Op} from "sequelize";
 import {AppointmentModel} from "../../appointment/models/appointment.model";
 import {UserFilterDto} from "../dtos/user-filter.dto";
+import {AdminSetupDto} from "../dtos/admin-setup.dto";
+import * as fs from "fs";
+import * as path from "path";
+import * as process from "process";
 
 export class UserService extends BaseService<UserModel> {
-  constructor(@Inject(AuthService) private authService: AuthService) {
+  constructor(
+      @Inject(AuthService) private authService: AuthService
+  ) {
     super(UserModel);
   }
 
@@ -137,5 +143,50 @@ export class UserService extends BaseService<UserModel> {
       }
     })
     return await super.remove({where: {id}})
+  }
+
+  async checkAdmins(): Promise<void> | never {
+    await super.getOne({
+      where: {
+        role: 0
+      }
+    })
+  }
+
+  async adminSetup(adminSetup: AdminSetupDto) {
+    const checkAdmins = await UserModel.findOne({
+      where: {
+        role: 0
+      }
+    });
+
+    const adminExists = !!(checkAdmins)
+
+    const keyConf = fs.readFileSync(path.join(process.cwd(), 'key.conf')).toString();
+
+    const key = keyConf.split('=')[1];
+
+    if (
+        (!adminSetup.key) || (!adminSetup.password) || (key.length < 1)
+    ) throw new BadRequestException("");
+
+    if (adminExists && adminSetup.key == key && adminSetup.password) {
+      checkAdmins.hash = await this.authService.generateHash(adminSetup.password);
+      await checkAdmins.save();
+      return;
+    }
+
+    if (adminSetup.key.trim() != key.trim()) throw new ForbiddenException();
+
+    if (!adminExists && adminSetup.key.trim() == key.trim() && adminSetup.password) {
+      await UserModel.create({
+        name: "admin",
+        surname: "admin",
+        lastname: "admin",
+        login: "admin",
+        role: 0,
+        hash: await this.authService.generateHash(adminSetup.password)
+      })
+    }
   }
 }

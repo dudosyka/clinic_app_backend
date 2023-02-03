@@ -213,7 +213,6 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     if (!fileModel)
       throw new ModelNotFoundException(UserFilesModel, fileId)
 
-    console.log(process.cwd());
     const file = createReadStream(join(process.cwd(), 'upload', fileModel.path));
     return new StreamableFile(file);
   }

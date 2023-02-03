@@ -24,6 +24,7 @@ import { UserUpdateDto } from '../dtos/user-update.dto';
 import { JwtAuthGuard } from '../../../guards/jwt-auth.guard';
 import { UserFilterDto } from '../dtos/user-filter.dto';
 import {AdminGuard} from "../../../guards/admin.guard";
+import {AdminSetupDto} from "../dtos/admin-setup.dto";
 
 @Controller('user')
 export class UserController {
@@ -40,6 +41,20 @@ export class UserController {
       await this.authService.signUser(req.user),
       ResponseStatus.SUCCESS,
     );
+  }
+
+  @Get('setup')
+  @HttpCode(ResponseStatus.SUCCESS)
+  public async checkAdmins(): Promise<ResponseFilter<void>> {
+    return ResponseFilter.response(await this.userService.checkAdmins(), ResponseStatus.SUCCESS)
+  }
+
+  @Post('setup')
+  @HttpCode(ResponseStatus.SUCCESS)
+  public async setup(
+      @Body() adminSetup: AdminSetupDto
+  ) {
+    return ResponseFilter.response(await this.userService.adminSetup(adminSetup), ResponseStatus.SUCCESS)
   }
 
   @Get('genhash/:str')
@@ -116,7 +131,9 @@ export class UserController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, AdminGuard)
   @HttpCode(ResponseStatus.NO_CONTENT)
-  public async remove(@Param('id') id: number): Promise<ResponseFilter<void>> {
+  public async remove(
+      @Param('id') id: number
+  ): Promise<ResponseFilter<void>> {
     return ResponseFilter.response<void>(
       await this.userService.remove(id),
       ResponseStatus.NO_CONTENT,
