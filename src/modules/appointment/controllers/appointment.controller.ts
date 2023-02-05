@@ -43,7 +43,7 @@ export class AppointmentController {
   }
 
   @Post('/:userId/file/upload')
-  @HttpCode(ResponseStatus.NO_CONTENT)
+  @HttpCode(ResponseStatus.SUCCESS)
   @UseInterceptors(FileInterceptor('file'))
   public async uploadFile(
       @Param("userId") userId: number,
