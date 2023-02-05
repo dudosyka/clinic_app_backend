@@ -90,7 +90,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     }
   }
 
-  public async getLast(patient_id: number): Promise<AppointmentModel> {
+  public async getLast(patient_id: number): Promise<{ id, is_first, patient, doctor, value }> {
     const models = await AppointmentModel.findAll({
       where: {
         patient_id,
@@ -101,10 +101,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     if (!models.length)
       throw new ModelNotFoundException(AppointmentModel, null);
 
-    console.log(models);
-
-
-    return models[0];
+    return this._getOne(models[0].id);
   }
 
   public async getAll(filters: AppointmentFilterDto) {
@@ -187,7 +184,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     await TransactionUtil.commit();
   }
 
-  async uploadFile(id: number, file: Express.Multer.File): Promise<void> {
+  async uploadFile(id: number, file: Express.Multer.File): Promise<UserFilesModel> {
     const model = await UserModel.findOne({
       where: {id}
     }).catch(err => {
@@ -196,7 +193,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
 
     if (!model) throw new ModelNotFoundException(UserModel, id)
 
-    await UserFilesModel.create({
+    return await UserFilesModel.create({
       user_id: model.id,
       path: file.filename,
       name: file.originalname

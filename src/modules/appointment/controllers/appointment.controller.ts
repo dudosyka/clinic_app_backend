@@ -22,6 +22,7 @@ import { AppointmentCreateDto } from '../dtos/appointment-create.dto';
 import { AppointmentUpdateDto } from '../dtos/appointment-update.dto';
 import {AppointmentFilterDto} from "../dtos/appointment-filter.dto";
 import {FileInterceptor} from "@nestjs/platform-express";
+import {UserFilesModel} from "../../user/models/user-files.model";
 
 @Controller('appointment')
 @UseGuards(JwtAuthGuard)
@@ -47,10 +48,10 @@ export class AppointmentController {
   public async uploadFile(
       @Param("userId") userId: number,
       @UploadedFile() file: Express.Multer.File
-  ) {
-    await this.appointmentService.uploadFile(userId, file).catch(err => {
+  ): Promise<ResponseFilter<UserFilesModel>> {
+    return ResponseFilter.response<UserFilesModel>(await this.appointmentService.uploadFile(userId, file).catch(err => {
       throw err;
-    });
+    }), ResponseStatus.SUCCESS);
   }
 
   @Get('file/:id/read')
@@ -65,8 +66,8 @@ export class AppointmentController {
   @HttpCode(ResponseStatus.SUCCESS)
   public async getLast(
     @Param('patient_id') patient_id: number,
-  ): Promise<ResponseFilter<AppointmentModel>> {
-    return ResponseFilter.response<AppointmentModel>(
+  ): Promise<ResponseFilter<{ id, is_first, patient, doctor, value }>> {
+    return ResponseFilter.response<{ id, is_first, patient, doctor, value }>(
       await this.appointmentService.getLast(patient_id),
       ResponseStatus.SUCCESS,
     );
@@ -90,7 +91,8 @@ export class AppointmentController {
     @Body() createDto: AppointmentCreateDto,
   ): Promise<ResponseFilter<AppointmentModel>> | never {
     console.log(req.user);
-    createDto.doctor_id = req.user.id;
+    if (!createDto.doctor_id)
+      createDto.doctor_id = req.user.id;
     return ResponseFilter.response<AppointmentModel>(
       await this.appointmentService.create(createDto),
       ResponseStatus.CREATED,

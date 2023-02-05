@@ -126,7 +126,7 @@ export class UserService extends BaseService<UserModel> {
     });
 
     if (update.password)
-      update.password = await this.authService.generateHash(update.password);
+      update.hash = await this.authService.generateHash(update.password);
 
     await userModel.update(update);
 

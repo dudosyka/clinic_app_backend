@@ -12,4 +12,6 @@ export class UserUpdateDto extends PartialType(UserCreateDto) {
     },
   )
   id: number;
+
+  hash: string;
 }

@@ -1,6 +1,6 @@
 import {
   IsBoolean, IsJSON,
-  IsNumber,
+  IsNumber, ValidateIf,
 } from 'class-validator';
 
 export class AppointmentCreateDto {
@@ -9,6 +9,12 @@ export class AppointmentCreateDto {
   })
   is_first: boolean;
 
+  @IsNumber({
+
+  }, {
+    message: "doctor_id must be INT"
+  })
+  @ValidateIf((object, value) => value != undefined)
   doctor_id: number;
 
   @IsNumber(
