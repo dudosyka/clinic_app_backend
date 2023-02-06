@@ -51,7 +51,7 @@ export class UserService extends BaseService<UserModel> {
       return super.getAll({
         arguments: ["id", "name", "surname", "lastname", "birthday"],
         offset: (page-1)*mainConf.limit,
-        limit: page* mainConf.limit,
+        limit: mainConf.limit,
         order: [['id', 'DESC']],
       });
 
@@ -114,7 +114,7 @@ export class UserService extends BaseService<UserModel> {
         },
         order: [['id', 'DESC']],
         offset: (page-1)*mainConf.limit,
-        limit: page* mainConf.limit
+        limit: mainConf.limit
       });
     }
     else return super.getAll();
