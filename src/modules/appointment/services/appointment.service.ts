@@ -141,7 +141,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     return AppointmentModel.findAll({
       attributes: ['id', 'createdAt'],
       offset: (page-1)*mainConf.limit,
-      limit: mainConf.limit * page,
+      limit: mainConf.limit,
       order,
       include: [ { model: UserModel, as: 'patient', where, attributes:['name', 'surname', 'lastname', 'birthday'] }, { model: UserModel, as: 'doctor',  attributes:['name', 'surname', 'lastname'] } ]
     });
