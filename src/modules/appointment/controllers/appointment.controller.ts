@@ -127,7 +127,7 @@ export class AppointmentController {
     return await this.appointmentService.generateDoc(appointmentId);
   }
 
-  @Post("doc/preview/:key")
+  @Get("doc/preview/:key")
   @HttpCode(ResponseStatus.SUCCESS)
   public async getPreview(
       @Param('key') key: string,
@@ -135,7 +135,7 @@ export class AppointmentController {
     return this.appointmentService.getDocPreview(key);
   }
 
-  @Post("doc/:key")
+  @Get("doc/:key")
   @HttpCode(ResponseStatus.SUCCESS)
   public async getDoc(
       @Param('key') key: string,
