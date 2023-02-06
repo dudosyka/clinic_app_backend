@@ -8,7 +8,7 @@ import {
   Param,
   Patch,
   Post,
-  Req, UploadedFile,
+  Req, StreamableFile, UploadedFile,
   UseGuards, UseInterceptors,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../guards/jwt-auth.guard';
@@ -117,5 +117,29 @@ export class AppointmentController {
       await this.appointmentService.remove(id),
       ResponseStatus.NO_CONTENT,
     );
+  }
+
+  @Get(':appointmentId/doc')
+  @HttpCode(ResponseStatus.SUCCESS)
+  public async generateDoc(
+      @Param('appointmentId') appointmentId: number,
+  ): Promise<{ key: number }> {
+    return await this.appointmentService.generateDoc(appointmentId);
+  }
+
+  @Post("doc/preview/:key")
+  @HttpCode(ResponseStatus.SUCCESS)
+  public async getPreview(
+      @Param('key') key: string,
+  ): Promise<StreamableFile> {
+    return this.appointmentService.getDocPreview(key);
+  }
+
+  @Post("doc/:key")
+  @HttpCode(ResponseStatus.SUCCESS)
+  public async getDoc(
+      @Param('key') key: string,
+  ): Promise<StreamableFile> {
+    return this.appointmentService.getDoc(key);
   }
 }

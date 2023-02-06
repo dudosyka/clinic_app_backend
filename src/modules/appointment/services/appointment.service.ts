@@ -15,6 +15,9 @@ import {UserFilesModel} from "../../user/models/user-files.model";
 import {createReadStream} from 'fs';
 import {join} from 'path'
 import * as process from "process";
+import * as fs from "fs";
+import * as path from "path";
+const HTMLtoDOCX = require('html-to-docx')
 
 @Injectable()
 export class AppointmentService extends BaseService<AppointmentModel> {
@@ -81,12 +84,13 @@ export class AppointmentService extends BaseService<AppointmentModel> {
         { model: UserModel, as: 'doctor' }
       ],
     });
+    console.log(model.value);
     return {
       id: model.id,
       is_first: model.is_first,
       patient: model.patient,
       doctor: model.doctor,
-      value: JSON.parse(model.value)
+      value: model.value//JSON.parse(model.value)
     }
   }
 
@@ -211,6 +215,213 @@ export class AppointmentService extends BaseService<AppointmentModel> {
       throw new ModelNotFoundException(UserFilesModel, fileId)
 
     const file = createReadStream(join(process.cwd(), 'upload', fileModel.path));
+    return new StreamableFile(file);
+  }
+
+  private getDateStr(): string {
+    let day:any = (new Date()).getDate();
+    if (day < 10)
+      day = `0${day}`;
+    let month:any = (new Date()).getMonth() + 1;
+    if (month < 10)
+      month = `0${month}`;
+    return `${day}.${month}.${(new Date()).getFullYear()}`;
+  }
+  private getAge(dateString: any): string {
+    let today = new Date();
+    let birthDate = new Date(dateString);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    let m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age.toString();
+  }
+
+  async generateDoc(appointmentId: number): Promise<{ key: number }> {
+    const analyze_constants = [
+      ["Протромбиновый индекс", "МНО", "Фибриноген", "АПТВ", "Тромбиновое время", "Антитромбин III", "Тест на LA", "Д-димер", "Гомоцистеин", "Протеин C", "Протеин S"],
+      ["АТ к β2-гликопротеину", "АТ к кардиолипину", "АТ к аннексину V", "АТ к ХГЧ", "АТ к протромбину", "АТ к фосфатидилсерину", "АТ к фосфатидил к-те", "АТ к фосфатидилинозитолу", "Антинуклеарный фактор", "АТ к 2сп ДНК"],
+      ["Lei", "Hb", "Ht", "Tr", "Ферритин", "ТТГ"]
+    ];
+    const crops_constants = [
+      ["Посев мочи", "Посев из ц/канала", "Посев из носа", "Посев из зева"],
+      ["Не выделена", "E. coli", "Enterococcus sp.", "Enterococcus faecalis", "Klebsiella sp.", "Staphyloc. ep.", "Streptococcus anginosus", "Streptococcus agalact.", "Streptococcus or.", "Streptococcus spp", "Streptococcus pneumoniae", "Candida albicans", "Lactobacillus sp.", "Proteus mirabilis", "Citrobacter", "Enterobacteriaceae", "Pseudomonas aeruginosa", "Haemophilus influenzae", "Moraxella catarrhalis", "Neisseria sicca", "Neisseria spp.", "Corynebacterium spp"],
+      ["Не выделена", "10³ КОЕ/мл", "10⁴ КОЕ/мл", "10⁵ КОЕ/мл", "10⁶ КОЕ/мл", "10⁷ КОЕ/мл", "10⁸ КОЕ/мл"]
+    ];
+    const dropdownsConstants = {
+      rubec: [
+        "Отсутствует",
+        "Рубец на матке после  кесарева сечения",
+        "Рубец на матке после 2-х операций кесарева сечения",
+        "Рубец на матке после малого кесарева сечения",
+        "Рубец на матке после перфорации матки",
+        "Рубец на матке после консервативной миомэктомии"
+      ],
+      hemodynamics: [
+        "Отсутствуют",
+        "I степени",
+        "II степени",
+        "III степени"
+      ],
+      eye_disease: [
+        "Отсутствуют",
+        "Миопия слабой степени",
+        "Миопия средней степени",
+        "Миопия высокой степени",
+        "Миопический астигматизм",
+        "Врожденная катаракта",
+        "ПХРД"
+      ],
+      diabetes: [
+        "Отсутствует",
+        "1 типа",
+        "2 типа на диете",
+        "2 типа на инсулине"
+      ],
+      oaga: [
+        "Отсутствует",
+        "ST I",
+        "ST II",
+        "CIN III",
+        "Ca incitu",
+        "Рубцовая деформация ш/м",
+        "Дермоидные кисты яичников",
+        "НГЭ III, комбинированое лечение",
+        "НГЭ II",
+      ],
+    }
+    const appointmentModel = await this._getOne(appointmentId);
+    // console.log(appointmentModel.value);
+    const patient_fullname =  `${appointmentModel.patient.surname} ${appointmentModel.patient.name} ${appointmentModel.patient.lastname}`;
+    const date = this.getDateStr();
+    const position = appointmentModel.doctor.position;
+    const anameses = appointmentModel.value.anameses;
+    const value = appointmentModel.value;
+    const tables = [];
+    for (let i = 0; i < 3; i++) {
+      const header = value["analyzes_" + (i + 1)].map(el => {
+        return `<td>${el.date}</td>`;
+      })
+      let rows = analyze_constants[i].map((el) => {
+        return `
+        <tr>
+            <td>${el}</td>
+      `;
+      });
+      value["analyzes_" + (i + 1)].forEach(el => {
+        el.values.forEach((el, index) => {
+          rows[index] += `
+          <td>${el}</td>
+        `;
+        })
+      });
+      rows = rows.map(el => {
+        return el + '</tr>';
+      });
+      tables.push({
+        header: header.join(''), rows: rows.join('')
+      })
+    }
+
+    const crops = value.crops.map(el => {
+      let value = el.value == 0 ? "" : crops_constants[2][el.value];
+      return `
+        <p>
+            <span>${el.date}</span> <span>${crops_constants[0][el.localization]}</span> <span>${crops_constants[1][el.flora]}</span> <span>${value}</span>
+        </p>
+      `;
+    }).join('');
+
+    const uzi = value.uzi.text;
+
+    const pregnancy = value.pregnancy.length ? `Течение настоящей беременности: ${value.pregnancy.replaceAll('\n', '<br>')}` : '';
+    const hospital = value.hospital.length ? `Госпитализации: ${value.hospital.replaceAll('\n', '<br>')}` : '';
+    const research = value.research.length ? `Объективное исследование: ${value.research.replaceAll('\n', '<br>')}` : '';
+    const docResearch = value.docResearch.length ? `Гинекологический осмотр: ${value.docResearch.replaceAll('\n', '<br>')}` : '';
+
+    const additional = value.additional.length ? `${value.additional}` : '';
+
+    const weeks = value.diagnosis.weeks;
+    let checkboxes = '';
+    value.diagnosis.checkboxes.forEach(item => {
+      item.boxes.filter(el => {
+        return el.value;
+      }).forEach(el => {
+        checkboxes += `${el.label} `;
+      });
+    });
+    const dropdowns = Object.keys(value.diagnosis.dropdowns).filter(key => value.diagnosis.dropdowns[key] != 0).map(key => {
+      const val = value.diagnosis.dropdowns[key];
+      console.log(key);
+      return dropdownsConstants[key][parseInt(val)];
+    }).join(", ");
+
+    const recommended = value.recommended.text;
+    const recommended_list = value.recommended.checkboxes.filter(el => el.value).map(el => {
+      return `<li>${el.label}</li>`;
+    }).join('');
+
+    const doctor_fullname = `${appointmentModel.doctor.surname} ${appointmentModel.doctor.name} ${appointmentModel.doctor.lastname}`;
+
+    let html = fs.readFileSync(path.join(process.cwd(), 'files', 'appointment.template.html')).toString();
+
+    html = html.replace('{patient.name}', patient_fullname);
+    html = html.replace('{patient.age}', this.getAge(appointmentModel.patient.birthday));
+    html = html.replace('{date}', date);
+    html = html.replace('{date}', date);
+    html = html.replace('{date}', date);
+    html = html.replace('{doctor.position}', position);
+    html = html.replace('{doctor.position}', position);
+    html = html.replace('{anameses}', anameses);
+    tables.forEach((el, index) => {
+      html = html.replace(`{${index}_table_header}`, el.header);
+      html = html.replace(`{${index}_table_rows}`, el.rows);
+    });
+
+    html = html.replace('{pregnancy}', pregnancy);
+    html = html.replace('{hospital}', hospital);
+    html = html.replace('{research}', research);
+    html = html.replace('{docResearch}', docResearch);
+    html = html.replace('{additional}', additional);
+
+    html = html.replace('{crops}', crops);
+    html = html.replace('{uzi}', uzi);
+
+    html = html.replace('{weeks}', weeks);
+    html = html.replace('{checkboxes}', checkboxes);
+    html = html.replace('{dropdowns}', dropdowns);
+
+    html = html.replace('{recommended_list}', recommended_list);
+    html = html.replace('{recommended}', recommended);
+
+    html = html.replace('{doctor.name}', doctor_fullname);
+
+    // fs.writeFile(path.join(process.cwd(), 'src', 'assets', 'exmaple2.html'), html, err => {})
+
+    const key = Date.now();
+
+    fs.writeFile(path.join(process.cwd(), 'files', key + '.html'), html, err => {});
+
+    const fileBuffer = await HTMLtoDOCX(html, null, {
+      table: { row: { cantSplit: true } },
+      footer: true,
+      pageNumber: true,
+    });
+    fs.writeFile(path.join(process.cwd(), 'files', key + '.docx'), fileBuffer, err => {})
+
+    return {
+      key
+    };
+  }
+
+  getDocPreview(key: string) {
+    const file = createReadStream(join(process.cwd(), 'files', key+'.html'));
+    return new StreamableFile(file);
+  }
+
+  getDoc(key: string) {
+    const file = createReadStream(join(process.cwd(), 'files', key+'.docx'));
     return new StreamableFile(file);
   }
 }

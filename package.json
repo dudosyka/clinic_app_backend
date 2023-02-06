@@ -34,6 +34,8 @@
     "cheerio": "^1.0.0-rc.12",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",
+    "html-docx-js": "^0.3.1",
+    "html-to-docx": "^1.6.5",
     "mysql": "^2.18.1",
     "mysql2": "^3.0.1",
     "passport": "^0.6.0",
