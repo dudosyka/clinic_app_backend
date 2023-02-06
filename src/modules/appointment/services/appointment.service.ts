@@ -279,6 +279,11 @@ export class AppointmentService extends BaseService<AppointmentModel> {
         "2 типа на диете",
         "2 типа на инсулине"
       ],
+      gsd: [
+        "Отсутствует",
+        "Диета",
+        "Инсулинотерапия"
+      ],
       oaga: [
         "Отсутствует",
         "ST I",
@@ -294,10 +299,11 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     const appointmentModel = await this._getOne(appointmentId);
     // console.log(appointmentModel.value);
     const patient_fullname =  `${appointmentModel.patient.surname} ${appointmentModel.patient.name} ${appointmentModel.patient.lastname}`;
+    const value = JSON.parse(appointmentModel.value); // why..?
     const date = this.getDateStr();
     const position = appointmentModel.doctor.position;
-    const anameses = appointmentModel.value.anameses;
-    const value = appointmentModel.value;
+    const anameses = value.anameses.replaceAll("\n","<br>");
+    // console.log(value);
     const tables = [];
     for (let i = 0; i < 3; i++) {
       const header = value["analyzes_" + (i + 1)].map(el => {
@@ -328,19 +334,19 @@ export class AppointmentService extends BaseService<AppointmentModel> {
       let value = el.value == 0 ? "" : crops_constants[2][el.value];
       return `
         <p>
-            <span>${el.date}</span> <span>${crops_constants[0][el.localization]}</span> <span>${crops_constants[1][el.flora]}</span> <span>${value}</span>
+            <span>${el.date} ${crops_constants[0][el.localization]} ${crops_constants[1][el.flora]} ${value}</span>
         </p>
       `;
     }).join('');
 
-    const uzi = value.uzi.text;
+    const uzi = value.uzi.text ? `<p><u>УЗИ:</u> ${value.uzi.text.replaceAll("\n","<br>")}</p>` : '';
 
-    const pregnancy = value.pregnancy.length ? `Течение настоящей беременности: ${value.pregnancy.replaceAll('\n', '<br>')}` : '';
-    const hospital = value.hospital.length ? `Госпитализации: ${value.hospital.replaceAll('\n', '<br>')}` : '';
-    const research = value.research.length ? `Объективное исследование: ${value.research.replaceAll('\n', '<br>')}` : '';
-    const docResearch = value.docResearch.length ? `Гинекологический осмотр: ${value.docResearch.replaceAll('\n', '<br>')}` : '';
+    const pregnancy = value.pregnancy.length ? `<p><u>Течение настоящей беременности:</u> ${value.pregnancy.replaceAll("\n","<br>")}</p>` : '';
+    const hospital = value.hospital.length ? `<p><u>Госпитализации:</u> ${value.hospital.replaceAll("\n","<br>")}</p>` : '';
+    const research = value.research.length ? `<p><u>Объективное исследование:</u> ${value.research.replaceAll("\n","<br>")}</p>` : '';
+    const docResearch = value.docResearch.length ? `<p><u>Гинекологический осмотр:</u> ${value.docResearch.replaceAll("\n","<br>")}</p>` : '';
 
-    const additional = value.additional.length ? `${value.additional}` : '';
+    const additional = value.additional.length ? `${value.additional.replaceAll("\n","<br>")}` : '';
 
     const weeks = value.diagnosis.weeks;
     let checkboxes = '';
@@ -393,10 +399,10 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     html = html.replace('{dropdowns}', dropdowns);
 
     html = html.replace('{recommended_list}', recommended_list);
-    html = html.replace('{recommended}', recommended);
+    html = html.replace('{recommended}', recommended.replaceAll("\n","<br>"));
 
     html = html.replace('{doctor.name}', doctor_fullname);
-
+    
     // fs.writeFile(path.join(process.cwd(), 'src', 'assets', 'exmaple2.html'), html, err => {})
 
     const key = Date.now();
@@ -407,6 +413,15 @@ export class AppointmentService extends BaseService<AppointmentModel> {
       table: { row: { cantSplit: true } },
       footer: true,
       pageNumber: true,
+      margins: {
+        left: '0.5cm',
+        top: '0.5cm',
+        right: '0.5cm',
+        bottom: '0.5cm',
+        header: 0,
+        footer: '1cm',
+        gutter: 0
+      }
     });
     fs.writeFile(path.join(process.cwd(), 'files', key + '.docx'), fileBuffer, err => {})
 
