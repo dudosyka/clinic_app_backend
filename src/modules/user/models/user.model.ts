@@ -26,7 +26,9 @@ export class UserModel extends Model {
   role: number;
 
   @Column({
-    type: DataType.BOOLEAN
+    type: DataType.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
   })
   deleted: boolean;
 
