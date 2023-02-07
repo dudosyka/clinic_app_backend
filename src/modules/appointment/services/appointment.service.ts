@@ -124,46 +124,46 @@ export class AppointmentService extends BaseService<AppointmentModel> {
               [Op.like]: `%${patientFullname[0]}%`
             },
           },
-          {
+          patientFullname.length > 1 ? {
             surname: {
               [Op.like]: `%${patientFullname[1]}%`
             },
-          },
-          {
+          } : {},
+          patientFullname.length > 2 ? {
             surname: {
               [Op.like]: `%${patientFullname[2]}%`
             },
-          },
+          } : {},
           {
             name: {
               [Op.like]: `%${patientFullname[0]}%`
             },
           },
-          {
+          patientFullname.length > 1 ? {
             name: {
               [Op.like]: `%${patientFullname[1]}%`
             },
-          },
-          {
+          } : {},
+          patientFullname.length > 2 ? {
             name: {
               [Op.like]: `%${patientFullname[2]}%`
             },
-          },
+          } : {},
           {
             lastname: {
               [Op.like]: `%${patientFullname[0]}%`
             }
           },
-          {
+          patientFullname.length > 1 ? {
             lastname: {
               [Op.like]: `%${patientFullname[1]}%`
             }
-          },
-          {
+          } : {},
+          patientFullname.length > 2 ? {
             lastname: {
               [Op.like]: `%${patientFullname[2]}%`
             }
-          }
+          } : {}
         ]
       }
     }
