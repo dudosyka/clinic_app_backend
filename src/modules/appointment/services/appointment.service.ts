@@ -200,7 +200,8 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     const model = await super.getOne({ where: { id } });
 
     TransactionUtil.setHost(await this.sequelize.transaction());
-
+    
+    await model.destroy(TransactionUtil.getHost());
     //If we remove "is_first" appointment and this user has other appointments we should to mark oldest as "is_first"
     if (model.is_first) {
       const other = await AppointmentModel.findAll();
