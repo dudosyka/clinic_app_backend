@@ -57,6 +57,14 @@ export class UserController {
     return ResponseFilter.response(await this.userService.adminSetup(adminSetup), ResponseStatus.SUCCESS)
   }
 
+  @Get('setup/:key')
+  @HttpCode(ResponseStatus.SUCCESS)
+  public async setupKey(
+      @Param('key') key: string
+  ) {
+    return ResponseFilter.response(await this.userService.adminSetupCheck(key), ResponseStatus.SUCCESS)
+  }
+
   @Get('genhash/:str')
   @HttpCode(ResponseStatus.SUCCESS)
   public async generateHash(

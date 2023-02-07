@@ -213,4 +213,12 @@ export class UserService extends BaseService<UserModel> {
     }
 
   }
+
+  async adminSetupCheck(inputKey: string): Promise<boolean>  {
+    const keyConf = fs.readFileSync(path.join(process.cwd(), 'key.conf')).toString();
+
+    const key = keyConf.split('=')[1].trim();
+    
+    return key === inputKey;
+  }
 }
