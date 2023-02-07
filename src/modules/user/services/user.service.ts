@@ -57,8 +57,6 @@ export class UserService extends BaseService<UserModel> {
 
     }
 
-    console.log(query);
-
     let where: any = {};
     if (query.fullName) {
       const patientFullname = query.fullName.split(" ");
@@ -82,6 +80,8 @@ export class UserService extends BaseService<UserModel> {
         ]
       }
     }
+
+    where.deleted = false;
 
     if (query.role || query.role == 0) {
       where.role = query.role;
@@ -122,7 +122,7 @@ export class UserService extends BaseService<UserModel> {
 
   public async update(update: UserUpdateDto): Promise<UserModel> | never {
     const userModel: UserModel = await this.getOne({
-      where: { id: update.id },
+      where: { id: update.id, deleted: false },
     });
 
     if (update.password)
@@ -133,16 +133,8 @@ export class UserService extends BaseService<UserModel> {
     return userModel;
   }
 
-  public async remove(id: number) {
-    await AppointmentModel.destroy({
-      where: {
-        [Op.or]: [
-          { patient_id: id },
-          { doctor_id: id }
-        ]
-      }
-    })
-    return await super.remove({where: {id}})
+  public async delete(id: number) {
+    await UserModel.update({deleted: true}, {where: {id}})
   }
 
   async checkAdmins(): Promise<void> | never {
@@ -186,7 +178,6 @@ export class UserService extends BaseService<UserModel> {
     if (adminExists && adminSetup.key.trim() != key.trim() && adminSetup.password) {
       checkAdmins.hash = await this.authService.generateHash(adminSetup.password);
       await checkAdmins.save();
-      return;
     } else {
       throw new BadRequestException("")
     }

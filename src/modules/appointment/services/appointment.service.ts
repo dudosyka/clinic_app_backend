@@ -125,9 +125,39 @@ export class AppointmentService extends BaseService<AppointmentModel> {
             },
           },
           {
+            surname: {
+              [Op.like]: `%${patientFullname[1]}%`
+            },
+          },
+          {
+            surname: {
+              [Op.like]: `%${patientFullname[2]}%`
+            },
+          },
+          {
+            name: {
+              [Op.like]: `%${patientFullname[0]}%`
+            },
+          },
+          {
             name: {
               [Op.like]: `%${patientFullname[1]}%`
             },
+          },
+          {
+            name: {
+              [Op.like]: `%${patientFullname[2]}%`
+            },
+          },
+          {
+            lastname: {
+              [Op.like]: `%${patientFullname[0]}%`
+            }
+          },
+          {
+            lastname: {
+              [Op.like]: `%${patientFullname[1]}%`
+            }
           },
           {
             lastname: {
@@ -147,7 +177,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
       offset: (page-1)*mainConf.limit,
       limit: mainConf.limit,
       order,
-      include: [ { model: UserModel, as: 'patient', where, attributes:['name', 'surname', 'lastname', 'birthday'] }, { model: UserModel, as: 'doctor',  attributes:['name', 'surname', 'lastname'] } ]
+      include: [ { model: UserModel, as: 'patient', where, attributes:['id', 'name', 'surname', 'lastname', 'birthday'] }, { model: UserModel, as: 'doctor',  attributes:['id', 'name', 'surname', 'lastname'] } ]
     });
   }
 
@@ -297,13 +327,13 @@ export class AppointmentService extends BaseService<AppointmentModel> {
       ],
     }
     const appointmentModel = await this._getOne(appointmentId);
-    // console.log(appointmentModel.value);
+
     const patient_fullname =  `${appointmentModel.patient.surname} ${appointmentModel.patient.name} ${appointmentModel.patient.lastname}`;
     const value = JSON.parse(appointmentModel.value); // why..?
     const date = this.getDateStr();
     const position = appointmentModel.doctor.position;
     const anameses = value.anameses.replaceAll("\n","<br>");
-    // console.log(value);
+
     const tables = [];
     for (let i = 0; i < 3; i++) {
       const header = value["analyzes_" + (i + 1)].map(el => {
@@ -407,7 +437,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
 
     const key = Date.now();
 
-    fs.writeFile(path.join(process.cwd(), 'files', key + '.html'), html, err => {});
+    fs.writeFile(path.join(process.cwd(), 'files', key + '.html'), html, () => {});
 
     const fileBuffer = await HTMLtoDOCX(html, null, {
       table: { row: { cantSplit: true } },
@@ -423,7 +453,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
         gutter: 0
       }
     });
-    fs.writeFile(path.join(process.cwd(), 'files', key + '.docx'), fileBuffer, err => {})
+    fs.writeFile(path.join(process.cwd(), 'files', key + '.docx'), fileBuffer, () => {})
 
     return {
       key

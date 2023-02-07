@@ -20,6 +20,7 @@ export class AuthService {
     let user = await UserModel.findOne({
       where: {
         login,
+        deleted: false,
       },
     });
 

@@ -25,6 +25,11 @@ export class UserModel extends Model {
   })
   role: number;
 
+  @Column({
+    type: DataType.BOOLEAN
+  })
+  deleted: boolean;
+
   @Column
   rank: string;
 

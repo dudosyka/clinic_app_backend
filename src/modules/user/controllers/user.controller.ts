@@ -129,13 +129,13 @@ export class UserController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwtAuthGuard)
   @HttpCode(ResponseStatus.NO_CONTENT)
   public async remove(
       @Param('id') id: number
   ): Promise<ResponseFilter<void>> {
     return ResponseFilter.response<void>(
-      await this.userService.remove(id),
+      await this.userService.delete(id),
       ResponseStatus.NO_CONTENT,
     );
   }
