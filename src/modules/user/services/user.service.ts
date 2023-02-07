@@ -189,7 +189,7 @@ export class UserService extends BaseService<UserModel> {
     const key = keyConf.split('=')[1];
 
     if ( (!adminSetup.password)
-    ) throw new BadRequestException("");
+    ) throw new BadRequestException("You must provide password");
 
     if (!adminExists && adminSetup.password) {
       await UserModel.create({
@@ -205,7 +205,7 @@ export class UserService extends BaseService<UserModel> {
 
     if (!adminSetup.key || (key.length < 1)) throw new ForbiddenException()
 
-    if (adminExists && adminSetup.key.trim() != key.trim() && adminSetup.password) {
+    if (adminExists && adminSetup.key.trim() == key.trim() && adminSetup.password) {
       checkAdmins.hash = await this.authService.generateHash(adminSetup.password);
       await checkAdmins.save();
     } else {
