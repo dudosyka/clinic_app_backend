@@ -136,8 +136,7 @@ export class UserService extends BaseService<UserModel> {
           where.id = {[Op.notIn]: hasFirstAppointmentUsers}
         }
       }
-
-      return await super.getAll({
+      let options = {
         arguments: ["id", "name", "surname", "lastname", "birthday"],
         where: {
           ...where,
@@ -145,7 +144,12 @@ export class UserService extends BaseService<UserModel> {
         order: [['id', 'DESC']],
         offset: (page-1)*mainConf.limit,
         limit: mainConf.limit
-      });
+      };
+      if(query.export) {
+        options.limit = 999999999;
+        options.order = [['id', 'ASC']];
+      }
+      return await super.getAll(options);
     }
     else return super.getAll();
   }

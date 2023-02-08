@@ -4,4 +4,6 @@ export class AppointmentFilterDto {
     patientFullname?: string | null;
 
     page?: number | null;
+
+    export?: boolean | null;
 }

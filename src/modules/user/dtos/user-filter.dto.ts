@@ -5,4 +5,6 @@ export class UserFilterDto {
   page?: number;
 
   hasAppointment?: boolean
+
+  export?: boolean | null;
 }

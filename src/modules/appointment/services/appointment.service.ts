@@ -172,14 +172,18 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     let page = 1;
     if (filters.page)
       page = filters.page
-
-    return AppointmentModel.findAll({
+    let options = {
       attributes: ['id', 'createdAt'],
       offset: (page-1)*mainConf.limit,
       limit: mainConf.limit,
       order,
       include: [ { model: UserModel, as: 'patient', where, attributes:['id', 'name', 'surname', 'lastname', 'birthday'] }, { model: UserModel, as: 'doctor',  attributes:['id', 'name', 'surname', 'lastname'] } ]
-    });
+    };
+    if(filters.export) {
+      options.limit = 999999999;
+      options.include = [ { model: UserModel, as: 'patient', where, attributes:['id'] }, { model: UserModel, as: 'doctor',  attributes:['id'] } ]
+    }
+    return AppointmentModel.findAll(options);
   }
 
   public async update(
