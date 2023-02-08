@@ -11,6 +11,7 @@ import { BadRequestException } from '../../../exceptions/bad-request.exception';
 import {AppointmentFilterDto} from "../dtos/appointment-filter.dto";
 import {Op} from "sequelize";
 import mainConf from "../../../confs/main.conf";
+import constantsConf from "../../../confs/constants.conf";
 import {UserFilesModel} from "../../user/models/user-files.model";
 import {createReadStream} from 'fs';
 import {join} from 'path'
@@ -270,63 +271,6 @@ export class AppointmentService extends BaseService<AppointmentModel> {
   }
 
   async generateDoc(appointmentId: number): Promise<{ key: number }> {
-    const analyze_constants = [
-      ["Протромбиновый индекс", "МНО", "Фибриноген", "АПТВ", "Тромбиновое время", "Антитромбин III", "Тест на LA", "Д-димер", "Гомоцистеин", "Протеин C", "Протеин S"],
-      ["АТ к β2-гликопротеину", "АТ к кардиолипину", "АТ к аннексину V", "АТ к ХГЧ", "АТ к протромбину", "АТ к фосфатидилсерину", "АТ к фосфатидил к-те", "АТ к фосфатидилинозитолу", "Антинуклеарный фактор", "АТ к 2сп ДНК"],
-      ["Lei", "Hb", "Ht", "Tr", "Ферритин", "ТТГ"]
-    ];
-    const crops_constants = [
-      ["Посев мочи", "Посев из ц/канала", "Посев из носа", "Посев из зева"],
-      ["Не выделена", "E. coli", "Enterococcus sp.", "Enterococcus faecalis", "Klebsiella sp.", "Staphyloc. ep.", "Streptococcus anginosus", "Streptococcus agalact.", "Streptococcus or.", "Streptococcus spp", "Streptococcus pneumoniae", "Candida albicans", "Lactobacillus sp.", "Proteus mirabilis", "Citrobacter", "Enterobacteriaceae", "Pseudomonas aeruginosa", "Haemophilus influenzae", "Moraxella catarrhalis", "Neisseria sicca", "Neisseria spp.", "Corynebacterium spp"],
-      ["Не выделена", "10³ КОЕ/мл", "10⁴ КОЕ/мл", "10⁵ КОЕ/мл", "10⁶ КОЕ/мл", "10⁷ КОЕ/мл", "10⁸ КОЕ/мл"]
-    ];
-    const dropdownsConstants = {
-      rubec: [
-        "Отсутствует",
-        "Рубец на матке после  кесарева сечения",
-        "Рубец на матке после 2-х операций кесарева сечения",
-        "Рубец на матке после малого кесарева сечения",
-        "Рубец на матке после перфорации матки",
-        "Рубец на матке после консервативной миомэктомии"
-      ],
-      hemodynamics: [
-        "Отсутствуют",
-        "I степени",
-        "II степени",
-        "III степени"
-      ],
-      eye_disease: [
-        "Отсутствуют",
-        "Миопия слабой степени",
-        "Миопия средней степени",
-        "Миопия высокой степени",
-        "Миопический астигматизм",
-        "Врожденная катаракта",
-        "ПХРД"
-      ],
-      diabetes: [
-        "Отсутствует",
-        "1 типа",
-        "2 типа на диете",
-        "2 типа на инсулине"
-      ],
-      gsd: [
-        "Отсутствует",
-        "Диета",
-        "Инсулинотерапия"
-      ],
-      oaga: [
-        "Отсутствует",
-        "ST I",
-        "ST II",
-        "CIN III",
-        "Ca incitu",
-        "Рубцовая деформация ш/м",
-        "Дермоидные кисты яичников",
-        "НГЭ III, комбинированое лечение",
-        "НГЭ II",
-      ],
-    }
     const appointmentModel = await this._getOne(appointmentId);
 
     const patient_fullname =  `${appointmentModel.patient.surname} ${appointmentModel.patient.name} ${appointmentModel.patient.lastname}`;
@@ -340,7 +284,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
       const header = value["analyzes_" + (i + 1)].map(el => {
         return `<td>${el.date}</td>`;
       })
-      let rows = analyze_constants[i].map((el) => {
+      let rows = constantsConf.analyze_constants[i].map((el) => {
         return `
         <tr>
             <td>${el}</td>
@@ -362,10 +306,10 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     }
 
     const crops = value.crops.map(el => {
-      let value = el.value == 0 ? "" : crops_constants[2][el.value];
+      let value = el.value == 0 ? "" : constantsConf.crops_constants[2][el.value];
       return `
         <p>
-            <span>${el.date} ${crops_constants[0][el.localization]} ${crops_constants[1][el.flora]} ${value}</span>
+            <span>${el.date} ${constantsConf.crops_constants[0][el.localization]} ${constantsConf.crops_constants[1][el.flora]} ${value}</span>
         </p>
       `;
     }).join('');
@@ -381,25 +325,23 @@ export class AppointmentService extends BaseService<AppointmentModel> {
 
     const weeks = value.diagnosis.weeks;
     let checkboxes = '';
-    value.diagnosis.checkboxes.forEach(item => {
-      item.boxes.filter(el => {
-        return el.value;
-      }).forEach(el => {
-        checkboxes += `${el.label} `;
-      });
-    });
+    console.log(value.diagnosis)
+    checkboxes += value.diagnosis.checkboxes.map(i => constantsConf.diagnosisCheckboxes[i])
+      .concat(value.detailed.illnesses.map(i => constantsConf.illnesses[i]))
+      .concat(value.detailed.trombofilia.map(i => constantsConf.trombofilia[i]))
+      .join(", ");
     const dropdowns = Object.keys(value.diagnosis.dropdowns).filter(key => value.diagnosis.dropdowns[key] != 0).map(key => {
       const val = value.diagnosis.dropdowns[key];
       console.log(key);
-      return dropdownsConstants[key][parseInt(val)];
+      return constantsConf.dropdownsConstants.keyNames[key] + ": " +constantsConf.dropdownsConstants[key][parseInt(val)];
     }).join(", ");
 
     const recommended = value.recommended.text;
-    const recommended_list = value.recommended.checkboxes.filter(el => el.value).map(el => {
-      return `<li>${el.label}</li>`;
+    const recommended_list = value.recommended.checkboxes.map(el => {
+      return `<li>${constantsConf.recommendedCheckboxes[el]}</li>`;
     }).join('');
 
-    const doctor_fullname = `${appointmentModel.doctor.surname} ${appointmentModel.doctor.name} ${appointmentModel.doctor.lastname}`;
+    const doctor_fullname = `${appointmentModel.doctor.surname} ${appointmentModel.doctor.name.substring(0,1)}. ${appointmentModel.doctor.lastname.substring(0,1)}.`;
 
     let html = fs.readFileSync(path.join(process.cwd(), 'files', 'appointment.template.html')).toString();
 
