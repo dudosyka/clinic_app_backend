@@ -127,14 +127,6 @@ export class AppointmentController {
     return await this.appointmentService.generateDoc(appointmentId);
   }
 
-  @Get("doc/preview/:key")
-  @HttpCode(ResponseStatus.SUCCESS)
-  public async getPreview(
-      @Param('key') key: string,
-  ): Promise<StreamableFile> {
-    return this.appointmentService.getDocPreview(key);
-  }
-
   @Get("doc/:key")
   @HttpCode(ResponseStatus.SUCCESS)
   public async getDoc(

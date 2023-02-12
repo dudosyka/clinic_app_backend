@@ -1,24 +1,24 @@
 import {Injectable, StreamableFile} from '@nestjs/common';
-import { AppointmentModel } from '../models/appointment.model';
-import { BaseService } from '../../base/base.service';
-import { AppointmentCreateDto } from '../dtos/appointment-create.dto';
-import { AppointmentUpdateDto } from '../dtos/appointment-update.dto';
-import { TransactionUtil } from '../../../utils/TransactionUtil';
-import { Sequelize } from 'sequelize-typescript';
-import { ModelNotFoundException } from '../../../exceptions/model-not-found.exception';
-import { UserModel } from '../../user/models/user.model';
-import { BadRequestException } from '../../../exceptions/bad-request.exception';
+import {AppointmentModel} from '../models/appointment.model';
+import {BaseService} from '../../base/base.service';
+import {AppointmentCreateDto} from '../dtos/appointment-create.dto';
+import {AppointmentUpdateDto} from '../dtos/appointment-update.dto';
+import {TransactionUtil} from '../../../utils/TransactionUtil';
+import {Sequelize} from 'sequelize-typescript';
+import {ModelNotFoundException} from '../../../exceptions/model-not-found.exception';
+import {UserModel} from '../../user/models/user.model';
+import {BadRequestException} from '../../../exceptions/bad-request.exception';
 import {AppointmentFilterDto} from "../dtos/appointment-filter.dto";
 import {Op} from "sequelize";
 import mainConf from "../../../confs/main.conf";
 import constantsConf from "../../../confs/constants.conf";
 import {UserFilesModel} from "../../user/models/user-files.model";
+import * as fs from 'fs';
 import {createReadStream} from 'fs';
+import * as path from 'path'
 import {join} from 'path'
 import * as process from "process";
-import * as fs from "fs";
-import * as path from "path";
-const HTMLtoDOCX = require('html-to-docx')
+import {Document, Packer, AlignmentType, Paragraph, Table, TableCell, TableRow, TextRun, UnderlineType} from "docx";
 
 @Injectable()
 export class AppointmentService extends BaseService<AppointmentModel> {
@@ -278,138 +278,385 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     const appointmentModel = await this._getOne(appointmentId);
 
     const patient_fullname =  `${appointmentModel.patient.surname} ${appointmentModel.patient.name} ${appointmentModel.patient.lastname}`;
-    const value = JSON.parse(appointmentModel.value); // why..?
+    const value = JSON.parse(appointmentModel.value); // why..? because in my case, it returns like a plain text....
     const date = this.getDateStr();
     const position = appointmentModel.doctor.position;
     const anameses = value.anameses.replaceAll("\n","<br>");
 
     const tables = [];
     for (let i = 0; i < 3; i++) {
-      const header = value["analyzes_" + (i + 1)].map(el => {
-        return `<td>${el.date}</td>`;
+      const header = new TableRow({
+        tableHeader: true,
+        children: [
+          new TableCell({
+            children: [
+                new Paragraph({
+                  children: [
+                      new TextRun({
+                        bold: true,
+                        text: "Дата",
+                        size: 16,
+                      })
+                  ]
+                })
+            ]
+          }),
+          ...(value["analyzes_" + (i + 1)].map((el) => {
+            return new TableCell({
+              children: [
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      bold: true,
+                      text: el.date,
+                      size: 16,
+                    })
+                  ]
+                }),
+              ]
+            });
+          }))
+        ]
       })
-      let rows = constantsConf.analyze_constants[i].map((el) => {
-        return `
-        <tr>
-            <td>${el}</td>
-      `;
-      });
-      value["analyzes_" + (i + 1)].forEach(el => {
-        el.values.forEach((el, index) => {
-          rows[index] += `
-          <td>${el}</td>
-        `;
-        })
-      });
-      rows = rows.map(el => {
-        return el + '</tr>';
-      });
-      tables.push({
-        header: header.join(''), rows: rows.join('')
-      })
+      let rows = [];
+      for (let j = 0; j < constantsConf.analyze_constants[i].length; j++) {
+        rows.push(new TableRow({
+          children: [
+            new TableCell({
+              children: [
+                new Paragraph({
+                  children: [
+                      new TextRun({
+                        text: constantsConf.analyze_constants[i][j],
+                        size: 16,
+                      })
+                  ]
+                })
+              ]
+            }),
+            ...(value["analyzes_" + (i + 1)].map(el => {
+              return new TableCell({
+                children: [
+                    new Paragraph({
+                      children: [
+                        new TextRun({
+                          text: el.values[j],
+                          size: 16,
+                        })
+                      ]
+                    })
+                ],
+                margins: {
+                  bottom: 5
+                }
+              })
+            }))
+          ],
+        }));
+      }
+      tables.push(
+          new Table({
+            rows: [
+              header,
+              ...rows
+            ],
+          }),
+          new Paragraph({
+            text: "\n"
+          })
+      );
     }
 
     const crops = value.crops.map(el => {
       let value = el.value == 0 ? "" : constantsConf.crops_constants[2][el.value];
-      return `
-        <p>
-            <span>${el.date} ${constantsConf.crops_constants[0][el.localization]} ${constantsConf.crops_constants[1][el.flora]} ${value}</span>
-        </p>
-      `;
-    }).join('');
+      return new Paragraph({
+        children: [
+            new TextRun({
+              size: 16,
+              text: `${el.date} ${constantsConf.crops_constants[0][el.localization]} ${constantsConf.crops_constants[1][el.flora]} ${value}`
+            })
+        ]
+      })
+    });
 
-    const uzi = value.uzi.text ? `<p><u>УЗИ:</u> ${value.uzi.text.replaceAll("\n","<br>")}</p>` : '';
+    let uzi = null;
 
-    const pregnancy = value.pregnancy.length ? `<p><u>Течение настоящей беременности:</u> ${value.pregnancy.replaceAll("\n","<br>")}</p>` : '';
-    const hospital = value.hospital.length ? `<p><u>Госпитализации:</u> ${value.hospital.replaceAll("\n","<br>")}</p>` : '';
-    const research = value.research.length ? `<p><u>Объективное исследование:</u> ${value.research.replaceAll("\n","<br>")}</p>` : '';
-    const docResearch = value.docResearch.length ? `<p><u>Гинекологический осмотр:</u> ${value.docResearch.replaceAll("\n","<br>")}</p>` : '';
+    if (value.uzi.text) {
+      uzi = new Paragraph({
+        children: [
+          new TextRun({
+            text: "Узи: ",
+            size: 22,
+            underline: {type: UnderlineType.SINGLE},
+          }),
+          new TextRun({
+            size: 16,
+            text: ` ${value.uzi.text}`,
+          })
+        ]
+      })
+    }
 
-    const additional = value.additional.length ? `${value.additional.replaceAll("\n","<br>")}` : '';
+    let pregnancy = null;
+
+    if (value.pregnancy.length) {
+      pregnancy = new Paragraph({
+        children: [
+          new TextRun({
+            text: "Течение настоящей беременности: ",
+            size: 22,
+            underline: {type: UnderlineType.SINGLE},
+          }),
+          new TextRun({
+            size: 16,
+            text: ` ${value.pregnancy}`,
+          })
+        ]
+      })
+    }
+
+    let hospital = null;
+
+    if (value.hospital.length) {
+      hospital = new Paragraph({
+        children: [
+          new TextRun({
+            text: "Госпитализации: ",
+            size: 22,
+            underline: {type: UnderlineType.SINGLE},
+          }),
+          new TextRun({
+            size: 16,
+            text: ` ${value.hospital}`,
+          })
+        ]
+      })
+    }
+
+    let research = null;
+
+    if (value.research.length) {
+      research = new Paragraph({
+        children: [
+          new TextRun({
+            text: "Объективное исследование: ",
+            size: 22,
+            underline: {type: UnderlineType.SINGLE},
+          }),
+          new TextRun({
+            size: 16,
+            text: ` ${value.research}`,
+          })
+        ]
+      })
+    }
+
+    let docResearch = null;
+
+    if (value.docResearch.length) {
+      docResearch = new Paragraph({
+        children: [
+          new TextRun({
+            text: "Гинекологический осмотр: ",
+            size: 22,
+            underline: {type: UnderlineType.SINGLE},
+          }),
+          new TextRun({
+            size: 16,
+            text: ` ${value.docResearch}`,
+          })
+        ]
+      })
+    }
+
+    let additional = null;
+
+    if (value.additional.length) {
+      additional = new Paragraph({
+        children: [
+          new TextRun({
+            text: `${value.additional}`,
+            size: 16,
+            break: 1
+          })
+        ]
+      })
+    }
 
     const weeks = value.diagnosis.weeks;
+
     let checkboxes = '';
-    console.log(value.diagnosis)
+
     checkboxes += value.diagnosis.checkboxes.map(i => constantsConf.diagnosisCheckboxes[i])
       .concat(value.detailed.illnesses.map(i => constantsConf.illnesses[i]))
       .concat(value.detailed.trombofilia.map(i => constantsConf.trombofilia[i]))
       .join(", ");
+
     const dropdowns = Object.keys(value.diagnosis.dropdowns).filter(key => value.diagnosis.dropdowns[key] != 0).map(key => {
       const val = value.diagnosis.dropdowns[key];
       console.log(key);
       return constantsConf.dropdownsConstants.keyNames[key] + ": " +constantsConf.dropdownsConstants[key][parseInt(val)];
     }).join(", ");
 
-    const recommended = value.recommended.text;
-    const recommended_list = value.recommended.checkboxes.map(el => {
-      return `<li>${constantsConf.recommendedCheckboxes[el]}</li>`;
-    }).join('');
-
-    const doctor_fullname = `${appointmentModel.doctor.surname} ${appointmentModel.doctor.name.substring(0,1)}. ${appointmentModel.doctor.lastname.substring(0,1)}.`;
-
-    let html = fs.readFileSync(path.join(process.cwd(), 'files', 'appointment.template.html')).toString();
-
-    html = html.replace('{patient.name}', patient_fullname);
-    html = html.replace('{patient.age}', this.getAge(appointmentModel.patient.birthday));
-    html = html.replace('{date}', date);
-    html = html.replace('{date}', date);
-    html = html.replace('{date}', date);
-    html = html.replace('{doctor.position}', position);
-    html = html.replace('{doctor.position}', position);
-    html = html.replace('{anameses}', anameses);
-    tables.forEach((el, index) => {
-      html = html.replace(`{${index}_table_header}`, el.header);
-      html = html.replace(`{${index}_table_rows}`, el.rows);
+    const diagnosis = new Paragraph({
+      children: [
+        new TextRun({
+          text: "Диагноз: ",
+          size: 22,
+          underline: {
+            type: UnderlineType.SINGLE
+          }
+        }),
+        new TextRun({
+          size: 16,
+          text: `Беременность ${weeks} недель. ${checkboxes}, ${dropdowns}`
+        })
+      ]
     });
 
-    html = html.replace('{pregnancy}', pregnancy);
-    html = html.replace('{hospital}', hospital);
-    html = html.replace('{research}', research);
-    html = html.replace('{docResearch}', docResearch);
-    html = html.replace('{additional}', additional);
+    const recommended = new Paragraph({
+      children: [
+          new TextRun({
+            text: value.recommended.text,
+            size: 16,
+          })
+      ]
+    });
+    const recommended_list = value.recommended.checkboxes.map(el => {
+      return new Paragraph({
+        children: [
+            new TextRun({
+              text: constantsConf.recommendedCheckboxes[el],
+              size: 16,
+            })
+        ],
+        bullet: {
+          level: 0
+        }
+      });
+    });
 
-    html = html.replace('{crops}', crops);
-    html = html.replace('{uzi}', uzi);
-
-    html = html.replace('{weeks}', weeks);
-    html = html.replace('{checkboxes}', checkboxes);
-    html = html.replace('{dropdowns}', dropdowns);
-
-    html = html.replace('{recommended_list}', recommended_list);
-    html = html.replace('{recommended}', recommended.replaceAll("\n","<br>"));
-
-    html = html.replace('{doctor.name}', doctor_fullname);
-    
-    // fs.writeFile(path.join(process.cwd(), 'src', 'assets', 'exmaple2.html'), html, err => {})
+    // const doctor_fullname = `${appointmentModel.doctor.surname} ${appointmentModel.doctor.name.substring(0,1)}. ${appointmentModel.doctor.lastname.substring(0,1)}.`;
 
     const key = Date.now();
 
-    fs.writeFile(path.join(process.cwd(), 'files', key + '.html'), html, () => {});
+    // fs.writeFile(path.join(process.cwd(), 'files', key + '.html'), html, () => {});
+    //
+    // const fileBuffer = await HTMLtoDOCX(html, null, {
+    //   table: { row: { cantSplit: true } },
+    //   footer: true,
+    //   pageNumber: true,
+    //   margins: {
+    //     left: '0.5cm',
+    //     top: '0.5cm',
+    //     right: '0.5cm',
+    //     bottom: '0.5cm',
+    //     header: 0,
+    //     footer: '1cm',
+    //     gutter: 0
+    //   },
+    //   fontSize: 16
+    // });
+    // fs.writeFile(path.join(process.cwd(), 'files', key + '.docx'), fileBuffer, () => {})
 
-    const fileBuffer = await HTMLtoDOCX(html, null, {
-      table: { row: { cantSplit: true } },
-      footer: true,
-      pageNumber: true,
-      margins: {
-        left: '0.5cm',
-        top: '0.5cm',
-        right: '0.5cm',
-        bottom: '0.5cm',
-        header: 0,
-        footer: '1cm',
-        gutter: 0
-      }
+    const children = [
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new TextRun({
+          size: 48,
+          text: "Консультативное заключение"
+        })]
+      }),
+      new Paragraph({
+        text: "\n"
+      }),
+      new Paragraph({
+        alignment: AlignmentType.LEFT,
+        children: [
+          new TextRun({
+            size: 16,
+            bold: true,
+            text: patient_fullname + ".  Возраст: " + this.getAge(appointmentModel.patient.birthday)
+          }),
+        ]
+      }),
+      new Paragraph({
+        alignment: AlignmentType.RIGHT,
+        children: [new TextRun({
+          size: 16,
+          bold: true,
+          text: date + " " + position
+        })]
+      }),
+      new Paragraph({
+        alignment: AlignmentType.LEFT,
+        children: [new TextRun({
+          text: anameses
+        })]
+      }),
+      new Paragraph({
+        text: "\n"
+      }),
+      ...tables,
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "Посевы",
+            size: 22,
+            underline: {type: UnderlineType.SINGLE},
+          }),
+        ]
+      }),
+      ...crops,
+    ];
+
+    if (uzi)
+      children.push(uzi);
+    if (pregnancy)
+      children.push(pregnancy);
+    if (hospital)
+      children.push(hospital);
+    if (research)
+      children.push(research);
+    if (docResearch)
+      children.push(docResearch);
+    if (additional)
+      children.push(additional);
+
+    children.push(diagnosis);
+
+    children.push(recommended)
+    recommended_list.forEach(el => {
+      children.push(el)
+    })
+
+    children.push(
+        new Paragraph({
+          alignment: AlignmentType.RIGHT,
+          children: [new TextRun({
+            size: 16,
+            bold: true,
+            text: date + " " + position
+          })]
+        })
+    );
+
+    const doc = new Document({
+      creator: "Clinic",
+      sections: [
+        {
+          children
+        }
+      ]
     });
-    fs.writeFile(path.join(process.cwd(), 'files', key + '.docx'), fileBuffer, () => {})
+
+    const b64String = await Packer.toBase64String(doc);
+
+    fs.writeFile(path.join(process.cwd(), 'files', key + 'new.docx'), Buffer.from(b64String, 'base64'), () => {})
 
     return {
       key
     };
-  }
-
-  getDocPreview(key: string) {
-    const file = createReadStream(join(process.cwd(), 'files', key+'.html'));
-    return new StreamableFile(file);
   }
 
   getDoc(key: string) {
