@@ -652,7 +652,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
 
     const b64String = await Packer.toBase64String(doc);
 
-    fs.writeFile(path.join(process.cwd(), 'files', key + 'new.docx'), Buffer.from(b64String, 'base64'), () => {})
+    fs.writeFile(path.join(process.cwd(), 'files', key + '.docx'), Buffer.from(b64String, 'base64'), () => {})
 
     return {
       key
