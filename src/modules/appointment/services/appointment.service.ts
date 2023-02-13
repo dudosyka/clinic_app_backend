@@ -361,9 +361,6 @@ export class AppointmentService extends BaseService<AppointmentModel> {
               ...rows
             ],
           }),
-          new Paragraph({
-            text: "\n"
-          })
       );
     }
 
@@ -386,7 +383,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
         children: [
           new TextRun({
             text: "Узи: ",
-            size: 22,
+            size: 16,
             underline: {type: UnderlineType.SINGLE},
           }),
           new TextRun({
@@ -404,7 +401,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
         children: [
           new TextRun({
             text: "Течение настоящей беременности: ",
-            size: 22,
+            size: 16,
             underline: {type: UnderlineType.SINGLE},
           }),
           new TextRun({
@@ -422,7 +419,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
         children: [
           new TextRun({
             text: "Госпитализации: ",
-            size: 22,
+            size: 16,
             underline: {type: UnderlineType.SINGLE},
           }),
           new TextRun({
@@ -440,7 +437,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
         children: [
           new TextRun({
             text: "Объективное исследование: ",
-            size: 22,
+            size: 16,
             underline: {type: UnderlineType.SINGLE},
           }),
           new TextRun({
@@ -458,7 +455,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
         children: [
           new TextRun({
             text: "Гинекологический осмотр: ",
-            size: 22,
+            size: 16,
             underline: {type: UnderlineType.SINGLE},
           }),
           new TextRun({
@@ -502,7 +499,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
       children: [
         new TextRun({
           text: "Диагноз: ",
-          size: 22,
+          size: 16,
           underline: {
             type: UnderlineType.SINGLE
           }
@@ -536,28 +533,9 @@ export class AppointmentService extends BaseService<AppointmentModel> {
       });
     });
 
-    // const doctor_fullname = `${appointmentModel.doctor.surname} ${appointmentModel.doctor.name.substring(0,1)}. ${appointmentModel.doctor.lastname.substring(0,1)}.`;
+    const doctor_fullname = `${appointmentModel.doctor.surname} ${appointmentModel.doctor.name.substring(0,1)}. ${appointmentModel.doctor.lastname.substring(0,1)}.`;
 
     const key = Date.now();
-
-    // fs.writeFile(path.join(process.cwd(), 'files', key + '.html'), html, () => {});
-    //
-    // const fileBuffer = await HTMLtoDOCX(html, null, {
-    //   table: { row: { cantSplit: true } },
-    //   footer: true,
-    //   pageNumber: true,
-    //   margins: {
-    //     left: '0.5cm',
-    //     top: '0.5cm',
-    //     right: '0.5cm',
-    //     bottom: '0.5cm',
-    //     header: 0,
-    //     footer: '1cm',
-    //     gutter: 0
-    //   },
-    //   fontSize: 16
-    // });
-    // fs.writeFile(path.join(process.cwd(), 'files', key + '.docx'), fileBuffer, () => {})
 
     const children = [
       new Paragraph({
@@ -566,9 +544,6 @@ export class AppointmentService extends BaseService<AppointmentModel> {
           size: 48,
           text: "Консультативное заключение"
         })]
-      }),
-      new Paragraph({
-        text: "\n"
       }),
       new Paragraph({
         alignment: AlignmentType.LEFT,
@@ -591,18 +566,16 @@ export class AppointmentService extends BaseService<AppointmentModel> {
       new Paragraph({
         alignment: AlignmentType.LEFT,
         children: [new TextRun({
+          size: 16,
           text: anameses
         })]
-      }),
-      new Paragraph({
-        text: "\n"
       }),
       ...tables,
       new Paragraph({
         children: [
           new TextRun({
             text: "Посевы",
-            size: 22,
+            size: 16,
             underline: {type: UnderlineType.SINGLE},
           }),
         ]
@@ -632,7 +605,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
 
     children.push(
         new Paragraph({
-          alignment: AlignmentType.RIGHT,
+          alignment: AlignmentType.LEFT,
           children: [new TextRun({
             size: 16,
             bold: true,
@@ -641,10 +614,34 @@ export class AppointmentService extends BaseService<AppointmentModel> {
         })
     );
 
+    children.push(
+        new Paragraph({
+          alignment: AlignmentType.RIGHT,
+          children: [new TextRun({
+            size: 16,
+            bold: true,
+            text: doctor_fullname
+          })]
+        })
+    );
+
     const doc = new Document({
       creator: "Clinic",
       sections: [
         {
+          properties: {
+            page: {
+              margin: {
+                top: "0.5cm",
+                right: "0.5cm",
+                bottom: "0.5cm",
+                left: "0.5cm",
+                header: 0,
+                footer: "1cm",
+                gutter: 0,
+              }
+            }
+          },
           children
         }
       ]
