@@ -125,7 +125,7 @@ export class UserController {
   }
 
   @Patch('')
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwtAuthGuard)
   @HttpCode(ResponseStatus.SUCCESS)
   public async update(
     @Body() update: UserUpdateDto,

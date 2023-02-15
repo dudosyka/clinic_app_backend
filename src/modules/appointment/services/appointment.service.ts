@@ -85,7 +85,6 @@ export class AppointmentService extends BaseService<AppointmentModel> {
         { model: UserModel, as: 'doctor' }
       ],
     });
-    console.log(model.value);
     return {
       id: model.id,
       is_first: model.is_first,
@@ -281,7 +280,6 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     const value = JSON.parse(appointmentModel.value); // why..? because in my case, it returns like a plain text....
     const date = this.getDateStr();
     const position = appointmentModel.doctor.position;
-    const anameses = value.anameses.replaceAll("\n","<br>");
 
     const tables = [];
     for (let i = 0; i < 3; i++) {
@@ -491,7 +489,6 @@ export class AppointmentService extends BaseService<AppointmentModel> {
 
     const dropdowns = Object.keys(value.diagnosis.dropdowns).filter(key => value.diagnosis.dropdowns[key] != 0).map(key => {
       const val = value.diagnosis.dropdowns[key];
-      console.log(key);
       return constantsConf.dropdownsConstants.keyNames[key] + ": " +constantsConf.dropdownsConstants[key][parseInt(val)];
     }).join(", ");
 
@@ -513,6 +510,13 @@ export class AppointmentService extends BaseService<AppointmentModel> {
 
     const recommended = new Paragraph({
       children: [
+          new TextRun({
+            text: "Рекомендации: ",
+            size: 16,
+            underline: {
+              type: UnderlineType.SINGLE
+            }
+          }),
           new TextRun({
             text: value.recommended.text,
             size: 16,
@@ -567,7 +571,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
         alignment: AlignmentType.LEFT,
         children: [new TextRun({
           size: 16,
-          text: anameses
+          text: value.anameses
         })]
       }),
       ...tables,
