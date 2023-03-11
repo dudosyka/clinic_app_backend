@@ -274,6 +274,18 @@ export class AppointmentService extends BaseService<AppointmentModel> {
   }
 
   async generateDoc(appointmentId: number): Promise<{ key: number }> {
+    const makeParagraph = (align, size, text) => {
+      return new Paragraph({
+        alignment: align,
+        children: [new TextRun({
+          size: size,
+          text: text
+        })]
+      })
+    };
+    const paragraphsFromField = (field) => {
+      return field.split("\n").map(i => makeParagraph(AlignmentType.LEFT, 16, i));
+    };
     const appointmentModel = await this._getOne(appointmentId);
 
     const patient_fullname =  `${appointmentModel.patient.surname} ${appointmentModel.patient.name} ${appointmentModel.patient.lastname}`;
@@ -283,6 +295,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
 
     const tables = [];
     for (let i = 0; i < 3; i++) {
+      if(value["analyzes_" + (i + 1)].length < 1) continue;
       const header = new TableRow({
         tableHeader: true,
         children: [
@@ -368,88 +381,76 @@ export class AppointmentService extends BaseService<AppointmentModel> {
         children: [
             new TextRun({
               size: 16,
-              text: `${el.date} ${constantsConf.crops_constants[0][el.localization]} ${constantsConf.crops_constants[1][el.flora]} ${value}`
+              text: `${el.date} ${constantsConf.crops_constants[0][el.localization-1]} ${constantsConf.crops_constants[1][el.flora]} ${value}`
             })
         ]
       })
     });
 
-    let uzi = null;
+    let uzi = [];
 
     if (value.uzi.text) {
-      uzi = new Paragraph({
+      uzi.push(new Paragraph({
         children: [
           new TextRun({
             text: "Узи: ",
             size: 16,
             underline: {type: UnderlineType.SINGLE},
-          }),
-          new TextRun({
-            size: 16,
-            text: ` ${value.uzi.text}`,
           })
         ]
-      })
+      }))
+      uzi.push(...paragraphsFromField(value.uzi.text))
     }
 
-    let pregnancy = null;
+    let pregnancy = [];
 
     if (value.pregnancy.length) {
-      pregnancy = new Paragraph({
+      pregnancy.push(new Paragraph({
         children: [
           new TextRun({
             text: "Течение настоящей беременности: ",
             size: 16,
             underline: {type: UnderlineType.SINGLE},
-          }),
-          new TextRun({
-            size: 16,
-            text: ` ${value.pregnancy}`,
           })
         ]
-      })
+      }))
+      pregnancy.push(...paragraphsFromField(value.pregnancy))
     }
 
-    let hospital = null;
+    let hospital = [];
 
     if (value.hospital.length) {
-      hospital = new Paragraph({
+      hospital.push(new Paragraph({
         children: [
           new TextRun({
             text: "Госпитализации: ",
             size: 16,
             underline: {type: UnderlineType.SINGLE},
-          }),
-          new TextRun({
-            size: 16,
-            text: ` ${value.hospital}`,
           })
         ]
-      })
+      }));
+      hospital.push(...paragraphsFromField((value.hospital)))
     }
 
-    let research = null;
+    let research = [];
 
     if (value.research.length) {
-      research = new Paragraph({
+      research.push(new Paragraph({
         children: [
           new TextRun({
             text: "Объективное исследование: ",
             size: 16,
             underline: {type: UnderlineType.SINGLE},
-          }),
-          new TextRun({
-            size: 16,
-            text: ` ${value.research}`,
           })
         ]
-      })
+      }))
+      research.push(...paragraphsFromField(value.research))
     }
 
-    let docResearch = null;
+    let docResearch = [];
 
     if (value.docResearch.length) {
-      docResearch = new Paragraph({
+      docResearch.push(new Paragraph({
         children: [
           new TextRun({
             text: "Гинекологический осмотр: ",
@@ -461,38 +462,28 @@ export class AppointmentService extends BaseService<AppointmentModel> {
             text: ` ${value.docResearch}`,
           })
         ]
-      })
+      }))
+      docResearch.push(...paragraphsFromField(value.docResearch));
     }
 
-    let additional = null;
+    let additional = [];
 
     if (value.additional.length) {
-      additional = new Paragraph({
-        children: [
-          new TextRun({
-            text: `${value.additional}`,
-            size: 16,
-            break: 1
-          })
-        ]
-      })
+      additional.push(...paragraphsFromField(value.additional));
     }
 
     const weeks = value.diagnosis.weeks;
 
-    let checkboxes = '';
-
-    checkboxes += value.diagnosis.checkboxes.map(i => constantsConf.diagnosisCheckboxes[i])
-      .concat(value.detailed.illnesses.map(i => constantsConf.illnesses[i]))
-      .concat(value.detailed.trombofilia.map(i => constantsConf.trombofilia[i]))
-      .join(", ");
+    const checkboxes = value.diagnosis.checkboxes.map(i => makeParagraph(AlignmentType.LEFT, 16, constantsConf.diagnosisCheckboxes[i]));
 
     const dropdowns = Object.keys(value.diagnosis.dropdowns).filter(key => value.diagnosis.dropdowns[key] != 0).map(key => {
-      const val = value.diagnosis.dropdowns[key];
-      return constantsConf.dropdownsConstants.keyNames[key] + ": " +constantsConf.dropdownsConstants[key][parseInt(val)];
-    }).join(", ");
+      if(key in constantsConf.dropdownsConstants.keyNames) {
+        const val = value.diagnosis.dropdowns[key];
+        return makeParagraph(AlignmentType.LEFT, 16, constantsConf.dropdownsConstants.keyNames[key] + ": " + constantsConf.dropdownsConstants[key][parseInt(val)]);
+      }
+    });
 
-    const diagnosis = new Paragraph({
+    const diagnosis = [new Paragraph({
       children: [
         new TextRun({
           text: "Диагноз: ",
@@ -503,10 +494,10 @@ export class AppointmentService extends BaseService<AppointmentModel> {
         }),
         new TextRun({
           size: 16,
-          text: `Беременность ${weeks} недель. ${checkboxes}, ${dropdowns}`
+          text: `Беременность ${weeks} недель.`
         })
       ]
-    });
+    })].concat(checkboxes).concat(dropdowns);
 
     const recommended = new Paragraph({
       children: [
@@ -516,10 +507,6 @@ export class AppointmentService extends BaseService<AppointmentModel> {
             underline: {
               type: UnderlineType.SINGLE
             }
-          }),
-          new TextRun({
-            text: value.recommended.text,
-            size: 16,
           })
       ]
     });
@@ -535,20 +522,42 @@ export class AppointmentService extends BaseService<AppointmentModel> {
           level: 0
         }
       });
-    });
+    }).concat(value.recommended.text.split("\n").map(el => {
+      return new Paragraph({
+        children: [
+          new TextRun({
+            text: el,
+            size: 16,
+          })
+        ],
+        bullet: {
+          level: 0
+        }
+      });
+    }));
 
     const doctor_fullname = `${appointmentModel.doctor.surname} ${appointmentModel.doctor.name.substring(0,1)}. ${appointmentModel.doctor.lastname.substring(0,1)}.`;
 
     const key = Date.now();
 
+    const emptyParagraph = makeParagraph(AlignmentType.CENTER, 16, "");
     const children = [
+      makeParagraph(AlignmentType.CENTER, 20, "Санкт-Петербургское государственное учреждение здравоохранения"),
+      makeParagraph(AlignmentType.CENTER, 20, "\"Родильный дом №6 имени профессора Снегирева В.Ф.\""),
+      makeParagraph(AlignmentType.CENTER, 20, "191014, Санкт-Петербург, ул. Маяковского, д.5"),
+      makeParagraph(AlignmentType.CENTER, 20, "Тел.: +7(812) 273-58-34"),
+      makeParagraph(AlignmentType.CENTER, 20, "e-mail: roddom6@zdrav.spb.ru"),
+      makeParagraph(AlignmentType.CENTER, 20, "www.roddom6spb.ru"),
+      emptyParagraph,
       new Paragraph({
         alignment: AlignmentType.CENTER,
         children: [new TextRun({
-          size: 48,
-          text: "Консультативное заключение"
+          size: 20,
+          text: "КОНСУЛЬТАТИВНОЕ ЗАКЛЮЧЕНИЕ",
+          bold: true
         })]
       }),
+      emptyParagraph,
       new Paragraph({
         alignment: AlignmentType.LEFT,
         children: [
@@ -559,22 +568,86 @@ export class AppointmentService extends BaseService<AppointmentModel> {
           }),
         ]
       }),
+      emptyParagraph,
       new Paragraph({
-        alignment: AlignmentType.RIGHT,
+        alignment: AlignmentType.LEFT,
         children: [new TextRun({
           size: 16,
-          bold: true,
-          text: date + " " + position
+          text: `Вес ${value.weight} кг, Рост ${value.height} см, ИМТ ${(()=>{
+            const IMT = Math.floor(value.weight.replace(",",".") / Math.pow(value.height.replace(",",".")/100,2) * 10) / 10;
+            if(IMT)
+              return IMT > 200 ? '' : IMT;
+            return '';})()}`
         })]
       }),
       new Paragraph({
         alignment: AlignmentType.LEFT,
         children: [new TextRun({
           size: 16,
-          text: value.anameses
+          text: "Дата последних месячных - "+value.mensesDate
         })]
       }),
+      new Paragraph({
+        alignment: AlignmentType.LEFT,
+        children: [new TextRun({
+          size: 16,
+          text: "Перенесенные заболевания: "+value.detailed.illnesses.map(i => constantsConf.detailed.illnesses[i]).join(", ")
+        })]
+      }),
+      new Paragraph({
+        alignment: AlignmentType.LEFT,
+        children: [new TextRun({
+          size: 16,
+          text: "Операции, травмы: "+value.detailed.operations.map(i => constantsConf.detailed.operations[i]).concat(value.detailed.operationsCustom.length > 0 ? [value.detailed.operationsCustom] : []).join(", ")
+        })]
+      }),
+      new Paragraph({
+        alignment: AlignmentType.LEFT,
+        children: [new TextRun({
+          size: 16,
+          text: "Туберкулез, венерические заболевания, гепатиты: "+(value.detailed.tvgCustom.length > 0 ? value.detailed.tvgCustom : "Отрицает")
+        })]
+      }),
+      new Paragraph({
+        alignment: AlignmentType.LEFT,
+        children: [new TextRun({
+          size: 16,
+          text: "Аллергические реакции: "+(value.detailed.allergicCustom.length > 0 ? value.detailed.allergicCustom : "Отрицает")
+        })]
+      }),
+      new Paragraph({
+        alignment: AlignmentType.LEFT,
+        children: [new TextRun({
+          size: 16,
+          text: "Гемотрансфузии: "+value.detailed.hemotransfusios.map(i => constantsConf.detailed.hemotransfusios[i]).concat(value.detailed.hemotransfusiosCustom.length > 0 ? [value.detailed.hemotransfusiosCustom] : []).join(", ")
+        })]
+      }),
+      new Paragraph({
+        alignment: AlignmentType.LEFT,
+        children: [new TextRun({
+          size: 16,
+          text: "Наследственность: "+value.detailed.inheritance.map(i => constantsConf.detailed.inheritance[i]).concat(value.detailed.inheritanceCustom.length > 0 ? [value.detailed.inheritanceCustom] : []).join(", ")
+        })]
+      }),
+      new Paragraph({
+        alignment: AlignmentType.LEFT,
+        children: [new TextRun({
+          size: 16,
+          text: "Обследование на наследственную тромбофилию: "+value.detailed.trombofilia.map(i => constantsConf.detailed.trombofilia[i]).join(", ")
+        })]
+      }),
+      emptyParagraph,
+      new Paragraph({
+        alignment: AlignmentType.LEFT,
+        children: [new TextRun({
+          size: 16,
+          text: "Гинекологические заболевания: "+(value.detailed.anameses_desiases.length > 0 ? value.detailed.anameses_desiases.map(i => constantsConf.detailed.anameses_desiases[i]).join(", ") : 'Отрицает')
+        })]
+      }),
+      ...paragraphsFromField(value.anameses),
+      emptyParagraph,
       ...tables,
+      emptyParagraph,
       new Paragraph({
         children: [
           new TextRun({
@@ -585,48 +658,55 @@ export class AppointmentService extends BaseService<AppointmentModel> {
         ]
       }),
       ...crops,
+      emptyParagraph,
     ];
 
-    if (uzi)
-      children.push(uzi);
-    if (pregnancy)
-      children.push(pregnancy);
-    if (hospital)
-      children.push(hospital);
-    if (research)
-      children.push(research);
-    if (docResearch)
-      children.push(docResearch);
-    if (additional)
-      children.push(additional);
-
-    children.push(diagnosis);
-
-    children.push(recommended)
-    recommended_list.forEach(el => {
-      children.push(el)
-    })
+    if (uzi.length > 0)
+      children.push(...uzi, emptyParagraph);
+    if (pregnancy.length > 0)
+      children.push(...pregnancy, emptyParagraph);
+    if (hospital.length > 0)
+      children.push(...hospital, emptyParagraph);
+    if (research.length > 0)
+      children.push(...research, emptyParagraph);
+    if (docResearch.length > 0)
+      children.push(...docResearch, emptyParagraph);
+    if (additional.length > 0)
+      children.push(...additional, emptyParagraph);
 
     children.push(
-        new Paragraph({
-          alignment: AlignmentType.LEFT,
-          children: [new TextRun({
-            size: 16,
-            bold: true,
-            text: date + " " + position
-          })]
-        })
+      ...diagnosis,
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "ОАГА (антенатальная гибель плода при сроке 30 недель, неразвивающаяся беременность 7 недель, преждевременные роды – эстренное кесарево сечение, ХПН, ГСД на инсулинотерапии).",
+            size: 16
+          }),
+        ]
+      }),
+      emptyParagraph
     );
 
+    children.push(recommended, ...recommended_list)
+
     children.push(
-        new Paragraph({
-          alignment: AlignmentType.RIGHT,
-          children: [new TextRun({
-            size: 16,
-            bold: true,
-            text: doctor_fullname
-          })]
-        })
+      emptyParagraph,
+      new Paragraph({
+        alignment: AlignmentType.LEFT,
+        children: [new TextRun({
+          size: 20,
+          bold: true,
+          text: doctor_fullname
+        })]
+      }),
+      new Paragraph({
+        alignment: AlignmentType.RIGHT,
+        children: [new TextRun({
+          size: 20,
+          bold: true,
+          text: date + " " + position
+        })]
+      })
     );
 
     const doc = new Document({
@@ -636,12 +716,12 @@ export class AppointmentService extends BaseService<AppointmentModel> {
           properties: {
             page: {
               margin: {
-                top: "0.5cm",
-                right: "0.5cm",
-                bottom: "0.5cm",
-                left: "0.5cm",
+                top: "1cm",
+                right: "1cm",
+                bottom: "1cm",
+                left: "2cm",
                 header: 0,
-                footer: "1cm",
+                footer: "0.5cm",
                 gutter: 0,
               }
             }
