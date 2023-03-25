@@ -386,7 +386,19 @@ export class AppointmentService extends BaseService<AppointmentModel> {
         ]
       })
     });
-
+    let anameses_textblocks = [];
+    if(value.anameses_textblocks) {
+      anameses_textblocks = Object.keys(value.anameses_textblocks)
+        .filter(key => value.anameses_textblocks[key] !== null && value.anameses_textblocks[key].length > 0)
+        .map(key => new Paragraph({
+        children: [
+          new TextRun({
+            size: 16,
+            text: `${key}: ${value.anameses_textblocks[key]}`
+          })
+        ]
+      }));
+    }
     let uzi = [];
 
     if (value.uzi.text) {
@@ -467,10 +479,19 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     }
 
     let additional = [];
-
-    if (value.additional.length) {
+    if(value.additional_blocks)
+        for(let i in constantsConf.additional_blocks.keyNames)
+          if(value.additional_blocks[i].length > 0)
+            additional.push(new Paragraph({
+              children: [
+                new TextRun({
+                  text: `${constantsConf.additional_blocks.keyNames[i]}: ${value.additional_blocks[i].map(el => constantsConf.additional_blocks[i][el]).join(", ")}`,
+                  size: 16
+                })
+              ]
+            }))
+    if (value.additional.length)
       additional.push(...paragraphsFromField(value.additional));
-    }
 
     const weeks = value.diagnosis.weeks;
 
@@ -644,6 +665,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
           text: "Гинекологические заболевания: "+(value.detailed.anameses_desiases.length > 0 ? value.detailed.anameses_desiases.map(i => constantsConf.detailed.anameses_desiases[i]).join(", ") : 'Отрицает')
         })]
       }),
+      ...anameses_textblocks,
       ...paragraphsFromField(value.anameses),
       emptyParagraph,
       ...tables,
