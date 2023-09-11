@@ -1,7 +1,7 @@
 export default {
   crops_constants: [
     ["Посев мочи", "Посев из ц/канала", "Посев из носа", "Посев из зева"],
-    ["Не выделена", "E. coli", "Enterococcus sp.", "Enterococcus faecalis", "Klebsiella sp.", "Staphyloc. ep.", "Streptococcus anginosus", "Streptococcus agalact.", "Streptococcus or.", "Streptococcus spp", "Streptococcus pneumoniae", "Candida albicans", "Lactobacillus sp.", "Proteus mirabilis", "Citrobacter", "Enterobacteriaceae", "Pseudomonas aeruginosa", "Haemophilus influenzae", "Moraxella catarrhalis", "Neisseria sicca", "Neisseria spp.", "Corynebacterium spp", "Staphylococcus aureus"],
+    ["Не выделена", "E. coli", "Enterococcus sp.", "Enterococcus faecalis", "Klebsiella sp.", "Staphyloc. ep.", "Streptococcus anginosus", "Streptococcus agalact.", "Streptococcus or.", "Streptococcus spp", "Streptococcus pneumoniae", "Candida albicans", "Lactobacillus sp.", "Proteus mirabilis", "Citrobacter", "Enterobacteriaceae", "Pseudomonas aeruginosa", "Haemophilus influenzae", "Moraxella catarrhalis", "Neisseria sicca", "Neisseria spp.", "Corynebacterium spp", "Staphylococcus aureus", "Klebsiella pn."],
     ["Не выделена", "10³ КОЕ/мл", "10⁴ КОЕ/мл", "10⁵ КОЕ/мл", "10⁶ КОЕ/мл", "10⁷ КОЕ/мл", "10⁸ КОЕ/мл"]
   ],
   analyze_constants: [
@@ -71,7 +71,10 @@ export default {
     35: "Привычное невынашивание",
     36: "Кольпит",
     37: "Планирование беременности",
-    38: "Планирование протокола ЭКО"
+    38: "Планирование протокола ЭКО",
+    101: "АФС",
+    102: "Акушерский АФС",
+    103: "Вероятный АФС"
   },
   recommendedCheckboxes: {
     1: "Компрессионный трикотаж I класса компрессии (Medi Step) — носить ежедневно!!!",
@@ -123,12 +126,13 @@ export default {
       1: "АФС",
       2: "Носительство LA",
       3: "Наследственная тромбофилия",
-      4: "FV",
-      5: "FII",
+      4: "FV (G/A)",
+      5: "FII (G/A)",
       6: "FV, FII – мутации не выявлены",
       7: "Дефицит АТIII",
       8: "Дефицит протеина С",
       9: "Дефицит протеина S",
+      10: "Гипергомоцистеинемия",
       100: "Наследственная тромбофилия не выявлена"
     },
     illnesses: {
@@ -178,6 +182,12 @@ export default {
       44: "Хронический геморрой",
       45: "Оперативное лечение хронического геморроя",
       46: "ДДЗП с грыжеобразованием",
+      47: "В/оспа",
+      48: "Краснуха",
+      49: "Корь",
+      50: "Хронический отит",
+      51: "Гиперметропия",
+      52: "Пневмония в детстве",
       1001: "Миопия слабой степени", // Заболевания глаз
       1002: "Миопия средней степени",
       1003: "Миопия высокой степени",

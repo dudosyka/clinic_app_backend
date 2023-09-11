@@ -294,6 +294,11 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     const position = appointmentModel.doctor.position;
 
     const tables = [];
+    const switchDateType = date => {
+      if(date.length != 10) return "";
+      date = date.toString().split("-");
+      return date[2]+"."+date[1]+"."+date[0];
+    }
     for (let i = 0; i < 3; i++) {
       if(value["analyzes_" + (i + 1)].length < 1) continue;
       const header = new TableRow({
@@ -319,7 +324,7 @@ export class AppointmentService extends BaseService<AppointmentModel> {
                   children: [
                     new TextRun({
                       bold: true,
-                      text: el.date,
+                      text: switchDateType(el.date),
                       size: 16,
                     })
                   ]
@@ -386,26 +391,13 @@ export class AppointmentService extends BaseService<AppointmentModel> {
         ]
       })
     });
-    let anameses_textblocks = [];
-    if(value.anameses_textblocks) {
-      anameses_textblocks = Object.keys(value.anameses_textblocks)
-        .filter(key => value.anameses_textblocks[key] !== null && value.anameses_textblocks[key].length > 0)
-        .map(key => new Paragraph({
-        children: [
-          new TextRun({
-            size: 16,
-            text: `${key}: ${value.anameses_textblocks[key]}`
-          })
-        ]
-      }));
-    }
     let uzi = [];
 
     if (value.uzi.text) {
       uzi.push(new Paragraph({
         children: [
           new TextRun({
-            text: "Узи: ",
+            text: "УЗИ: ",
             size: 16,
             underline: {type: UnderlineType.SINGLE},
           })
@@ -468,10 +460,6 @@ export class AppointmentService extends BaseService<AppointmentModel> {
             text: "Гинекологический осмотр: ",
             size: 16,
             underline: {type: UnderlineType.SINGLE},
-          }),
-          new TextRun({
-            size: 16,
-            text: ` ${value.docResearch}`,
           })
         ]
       }))
@@ -479,30 +467,21 @@ export class AppointmentService extends BaseService<AppointmentModel> {
     }
 
     let additional = [];
-    if(value.additional_blocks)
-        for(let i in constantsConf.additional_blocks.keyNames)
-          if(value.additional_blocks[i].length > 0)
-            additional.push(new Paragraph({
-              children: [
-                new TextRun({
-                  text: `${constantsConf.additional_blocks.keyNames[i]}: ${value.additional_blocks[i].map(el => constantsConf.additional_blocks[i][el]).join(", ")}`,
-                  size: 16
-                })
-              ]
-            }))
     if (value.additional.length)
       additional.push(...paragraphsFromField(value.additional));
 
     const weeks = value.diagnosis.weeks;
 
     const checkboxes = value.diagnosis.checkboxes.map(i => makeParagraph(AlignmentType.LEFT, 16, constantsConf.diagnosisCheckboxes[i]));
+    const operations = value.detailed.operations.map(i => makeParagraph(AlignmentType.LEFT, 16, constantsConf.detailed.operations[i]))
+      .concat(value.detailed.operationsCustom.length > 0 ? [makeParagraph(AlignmentType.LEFT, 16, value.detailed.operationsCustom)] : []);
+    const illnesses = value.detailed.illnesses.filter(i => (i < 47 || i > 49) && i != 52).map(i => makeParagraph(AlignmentType.LEFT, 16, constantsConf.detailed.illnesses[i]))
+      .concat(value.detailed.illnessesCustom.length > 0 ? [makeParagraph(AlignmentType.LEFT, 16, value.detailed.illnessesCustom)] : []);
 
-    const dropdowns = Object.keys(value.diagnosis.dropdowns).filter(key => value.diagnosis.dropdowns[key] != 0).map(key => {
-      if(key in constantsConf.dropdownsConstants.keyNames) {
-        const val = value.diagnosis.dropdowns[key];
-        return makeParagraph(AlignmentType.LEFT, 16, constantsConf.dropdownsConstants.keyNames[key] + ": " + constantsConf.dropdownsConstants[key][parseInt(val)]);
-      }
-    });
+    const trombofilia = value.detailed.trombofilia.filter(i => i != 100 && i != 0).map(i => makeParagraph(AlignmentType.LEFT, 16, constantsConf.detailed.trombofilia[i]));
+
+    const inheritance = value.detailed.inheritance.filter(i => i != 0 && i < 5).map(i => makeParagraph(AlignmentType.LEFT, 16, constantsConf.detailed.inheritance[i]))
+      .concat(value.detailed.inheritanceCustom.length > 0 ? [makeParagraph(AlignmentType.LEFT, 16, value.detailed.inheritanceCustom)] : []);
 
     const diagnosis = [new Paragraph({
       children: [
@@ -512,13 +491,10 @@ export class AppointmentService extends BaseService<AppointmentModel> {
           underline: {
             type: UnderlineType.SINGLE
           }
-        }),
-        new TextRun({
-          size: 16,
-          text: `Беременность ${weeks} недель.`
         })
       ]
-    })].concat(checkboxes).concat(dropdowns);
+    })].concat([makeParagraph(AlignmentType.LEFT, 16, `Беременность ${weeks} недель.`)])
+      .concat(checkboxes).concat(operations).concat(illnesses).concat(trombofilia).concat(inheritance);
 
     const recommended = new Paragraph({
       children: [
@@ -612,20 +588,6 @@ export class AppointmentService extends BaseService<AppointmentModel> {
         alignment: AlignmentType.LEFT,
         children: [new TextRun({
           size: 16,
-          text: "Перенесенные заболевания: "+value.detailed.illnesses.map(i => constantsConf.detailed.illnesses[i]).join(", ")
-        })]
-      }),
-      new Paragraph({
-        alignment: AlignmentType.LEFT,
-        children: [new TextRun({
-          size: 16,
-          text: "Операции, травмы: "+value.detailed.operations.map(i => constantsConf.detailed.operations[i]).concat(value.detailed.operationsCustom.length > 0 ? [value.detailed.operationsCustom] : []).join(", ")
-        })]
-      }),
-      new Paragraph({
-        alignment: AlignmentType.LEFT,
-        children: [new TextRun({
-          size: 16,
           text: "Туберкулез, венерические заболевания, гепатиты: "+(value.detailed.tvgCustom.length > 0 ? value.detailed.tvgCustom : "Отрицает")
         })]
       }),
@@ -650,22 +612,14 @@ export class AppointmentService extends BaseService<AppointmentModel> {
           text: "Наследственность: "+value.detailed.inheritance.map(i => constantsConf.detailed.inheritance[i]).concat(value.detailed.inheritanceCustom.length > 0 ? [value.detailed.inheritanceCustom] : []).join(", ")
         })]
       }),
-      new Paragraph({
-        alignment: AlignmentType.LEFT,
-        children: [new TextRun({
-          size: 16,
-          text: "Обследование на наследственную тромбофилию: "+value.detailed.trombofilia.map(i => constantsConf.detailed.trombofilia[i]).join(", ")
-        })]
-      }),
       emptyParagraph,
       new Paragraph({
         alignment: AlignmentType.LEFT,
         children: [new TextRun({
           size: 16,
-          text: "Гинекологические заболевания: "+(value.detailed.anameses_desiases.length > 0 ? value.detailed.anameses_desiases.map(i => constantsConf.detailed.anameses_desiases[i]).join(", ") : 'Отрицает')
+          text: "Гинекологические заболевания: "+(value.detailed.anameses_desiases.length > 0 ? value.detailed.anameses_desiases.map(i => constantsConf.detailed.anameses_desiases[i]).concat(value.detailed.anameses_desiasesCustom.length > 0 ? [value.detailed.anameses_desiasesCustom] : []).join(", ") : 'Отрицает')
         })]
       }),
-      ...anameses_textblocks,
       ...paragraphsFromField(value.anameses),
       emptyParagraph,
       ...tables,
